@@ -29,38 +29,48 @@ function parseData(chatData) {
     var chatObj = {};
     var dateIndexValue = 0;
 
-    if (/am: /.test(message)) {
-      dateIndexValue = message.indexOf("am: ");
+    var year = message.slice(6, 10);
+    year = parseInt(year) || 0;
+
+    //check if valid date is present
+    //year should be valid between index 6 and 10
+
+    if (year > 2000) {
+      //assigning appropriate strings to date, sender and text keys in the chatObj
+
+      if (/am: /.test(message)) {
+        dateIndexValue = message.indexOf("am: ");
+      } else {
+        dateIndexValue = message.indexOf("pm: ");
+      }
+      chatObj.Dates = message.substring(0, dateIndexValue + 2);
+
+      var senderIndexValue = message.indexOf(": ", dateIndexValue + 3);
+      chatObj.Sender = message.substring(dateIndexValue + 4, senderIndexValue);
+
+      chatObj.Text = message.substring(senderIndexValue + 2);
     } else {
-      dateIndexValue = message.indexOf("pm: ");
+      chatObj.Dates = "";
+      chatObj.Sender = "";
+      chatObj.Text = message;
     }
-    chatObj.Dates = message.substring(0, dateIndexValue + 2);
-
-    var senderIndexValue = message.indexOf(": ", dateIndexValue + 3);
-    chatObj.Sender = message.substring(dateIndexValue + 4, senderIndexValue);
-
-    chatObj.Text = message.substring(senderIndexValue + 2);
 
     return chatObj;
   })
 
   console.log(chatArr);
+  //find the current obj with null date and sender, append the object's text to previous valid obj and delete the current obj
+  var prevObj = {};
+  chatArr.forEach(function(message, i) {
+    if (message.Dates == "" || message.Sender == "") {
+      prevObj.Text = prevObj.Text.concat(message.Text);
+      chatArr.splice(i, 1);
+    } else {
+      prevObj = message;
+    }
+  })
 
-
-chatArr.forEach(function(message, i){
-  var year = message.slice(6, 10);
-  year = parseInt(year) || 0;
-
-  if(year > 2000){
-    dont do anthing to my current object, just return it
-  }
-
-})
-
-
-
-
-
+  console.log(chatArr);
 
 
   firstMessage(chatArr);
@@ -131,7 +141,7 @@ chatArr.forEach(function(message, i){
   console.log(textArray);
   textArray = _.flattenDeep(textArray);
 
-  textArray = textArray.map(function(item){
+  textArray = textArray.map(function(item) {
     return item.toLowerCase();
   })
   textArray.sort();
@@ -165,7 +175,7 @@ function mostUsedWords(textArray) {
 
   console.log(textArray);
 
-  textArray.forEach(function(arr, i){
+  textArray.forEach(function(arr, i) {
     var key, value = 0;
     if (arr !== prev) {
       key = arr;
@@ -176,7 +186,7 @@ function mostUsedWords(textArray) {
       newObj[key] = newObj[key] + 1;
     }
     prev = arr;
-})
+  })
   return newObj;
 }
 
@@ -205,10 +215,10 @@ function firstMessage(obj) {
     if (message.Dates.indexOf(prev) < 0) {
       firsts.push(message);
     }
-    prev = message.Dates.slice(0,9);
+    prev = message.Dates.slice(0, 9);
   })
 
-  firsts = firsts.filter(function(message, i){
+  firsts = firsts.filter(function(message, i) {
     return moment(message.Dates).isValid();
 
   })
