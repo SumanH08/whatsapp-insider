@@ -46,7 +46,7 @@ function parseData(chatData) {
       chatObj.Dates = message.substring(0, dateIndexValue + 2);
 
       var senderIndexValue = message.indexOf(": ", dateIndexValue + 3);
-      chatObj.Sender = message.substring(dateIndexValue + 4, senderIndexValue);
+      chatObj.Sender = message.substring(dateIndexValue + 4, senderIndexValue).trim();
 
       chatObj.Text = message.substring(senderIndexValue + 2);
     } else {
@@ -58,20 +58,30 @@ function parseData(chatData) {
     return chatObj;
   })
 
+  console.log("First Look below");
   console.log(chatArr);
   //find the current obj with null date and sender, append the object's text to previous valid obj and delete the current obj
   var prevObj = {};
-  chatArr.forEach(function(message, i) {
+  chatArr = chatArr.filter(function(message, i) {
     if (message.Dates == "" || message.Sender == "") {
       prevObj.Text = prevObj.Text.concat(message.Text);
-      chatArr.splice(i, 1);
+      return false;
     } else {
       prevObj = message;
+      return message;
     }
   })
-
+  console.log("After parsing below");
   console.log(chatArr);
 
+  //Replacing all double quotes with single quotes
+
+  chatArr = chatArr.map(function(obj, i) {
+    obj.Text = obj.Text.replace(/"/g, "");
+    return obj;
+  })
+  console.log("After replacing below");
+  console.log(chatArr);
 
   firstMessage(chatArr);
   //Calculate most messages exchanged by what sender
@@ -93,7 +103,7 @@ function parseData(chatData) {
 
     if (obj["Sender"].indexOf("EB") >= 0) {
       messageKing++;
-    } else if (obj["Sender"].indexOf("Suman Hiremath ") >= 0) {
+    } else if (obj["Sender"].indexOf("Suman") >= 0) {
       messageQueen++;
     }
 
@@ -103,7 +113,7 @@ function parseData(chatData) {
     if (obj["Sender"].indexOf("EB") >= 0) {
       EBMessage = obj["Text"].split(" ");
       EBMessageLength += EBMessage.length;
-    } else if (obj["Sender"].indexOf("Suman Hiremath ") >= 0) {
+    } else if (obj["Sender"].indexOf("Suman") >= 0) {
       SumanMessage = obj["Text"].split(" ");
       SumanMessageLength += SumanMessage.length;
     }
@@ -131,14 +141,14 @@ function parseData(chatData) {
     if (obj["Text"].indexOf("<‎image omitted>") >= 0) {
       if (obj["Sender"] == "EB") {
         imageObj[obj.Sender] = EBimages++;
-      } else if (obj["Sender"] == "Suman Hiremath ") {
+      } else if (obj["Sender"] == "Suman Hiremath") {
         imageObj[obj.Sender] = SumanImages++;
       }
     }
 
   })
 
-  console.log(textArray);
+
   textArray = _.flattenDeep(textArray);
 
   textArray = textArray.map(function(item) {
@@ -148,20 +158,21 @@ function parseData(chatData) {
 
   //var result = _.countBy(textArray, _.identity);
   var result = mostUsedWords(textArray);
-
+  //
   // console.log("This is the person who sent most messages -> " + (messageKing > messageQueen ? "EB: " + messageKing : "Suman: " + messageQueen));
   //
-  // console.log("EB's total word length:" + (EBMessageLength)); console.log("Suman's total word length:" + (SumanMessageLength));
+  // console.log("EB's total word length:" + (EBMessageLength));
+  // console.log("Suman's total word length:" + (SumanMessageLength));
   //
-  // console.log("EB's average word length per message:" + (Math.ceil(EBMessageLength / messageKing)));
+  // console.log("EB's average word length per message:" + (EBMessageLength / messageKing).toFixed(4));
   //
-  // console.log("Suman's average word length per message:" + (Math.ceil(SumanMessageLength / messageQueen)));
+  // console.log("Suman's average word length per message:" + (SumanMessageLength / messageQueen).toFixed(4));
   //
   // console.log("Emojis by each sender", emojiObj);
-
+  //
   // console.log("Most used words now");
   // console.log(result);
-
+  //
   // console.log("Images by each sender", imageObj);
 }
 
@@ -173,9 +184,11 @@ function mostUsedWords(textArray) {
     prev;
   var newObj = {};
 
+  console.log("Sorted text array below");
   console.log(textArray);
 
   textArray.forEach(function(arr, i) {
+
     var key, value = 0;
     if (arr !== prev) {
       key = arr;
@@ -223,7 +236,7 @@ function firstMessage(obj) {
 
   })
 
-  console.log(firsts);
+  //  console.log(firsts);
 }
 
 
