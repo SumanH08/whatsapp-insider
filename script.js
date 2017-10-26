@@ -84,6 +84,7 @@ function parseData(chatData) {
   console.log(chatArr);
 
   firstMessage(chatArr);
+  //countMessagesOverDays(chatArr);
   //Calculate most messages exchanged by what sender
 
   var messageKing = 0,
@@ -106,7 +107,6 @@ function parseData(chatData) {
     } else if (obj["Sender"].indexOf("Suman") >= 0) {
       messageQueen++;
     }
-
 
     //Calculate average word length
 
@@ -152,12 +152,18 @@ function parseData(chatData) {
   textArray = _.flattenDeep(textArray);
 
   textArray = textArray.map(function(item) {
+    item = item.trim();
     return item.toLowerCase();
   })
   textArray.sort();
 
   //var result = _.countBy(textArray, _.identity);
   var result = mostUsedWords(textArray);
+
+  var resultArr = [];
+  resultArr = Object.keys(result).map(function(item, i){
+    return result[i];
+  })
   //
   // console.log("This is the person who sent most messages -> " + (messageKing > messageQueen ? "EB: " + messageKing : "Suman: " + messageQueen));
   //
@@ -170,13 +176,13 @@ function parseData(chatData) {
   //
   // console.log("Emojis by each sender", emojiObj);
   //
-  // console.log("Most used words now");
-  // console.log(result);
+  console.log("Most used words now");
+  console.log(result);
+  console.log(resultArr);
   //
   // console.log("Images by each sender", imageObj);
 }
 
-//func that calculates most used words - yet to resolve the double quotes prob
 function mostUsedWords(textArray) {
 
   var a = [],
@@ -205,42 +211,47 @@ function mostUsedWords(textArray) {
 
 //func that calculates the first sender of a message per day
 
-// function firstMessage(obj){
-//   var prev;
-//   var uniqueObj = {}, cart=[];
-//   obj.forEach(function(message, i){
-//   if(message.Dates.indexOf(prev) < 0){
-//     uniqueObj.Dates = message.Dates;
-//     uniqueObj.Sender = message.Sender;
-//     cart.push({uniqueObj: uniqueObj});
-//   }
-//   prev = message.Dates;
-//
-// })
-//
-// console.log(uniqueObj, cart);
-// }
 
 function firstMessage(obj) {
   var prev = "";
   var firsts = [];
-  obj.forEach(function(message, i) {
-    if (message.Dates.indexOf(prev) < 0) {
-      firsts.push(message);
+  var format = 'hh:mm:ss A';
+  var time = moment('06:00:00', format);
+  var currTime;
+
+//filters messages sent after 6 am, resulting in an obj consisting of messages exchanged only after 6 am each day
+  obj = obj.filter(function(message, i){
+    currTime = moment(message.Dates.slice(12, 23), format);
+    if(currTime > time){
+      return true;
     }
+  })
+//determines the first message exchanged each day
+  obj.forEach(function(message, i) {
+        if (message.Dates.indexOf(prev) < 0 || prev == "") {
+            firsts.push(message);
+        }
     prev = message.Dates.slice(0, 9);
   })
-
-  firsts = firsts.filter(function(message, i) {
-    return moment(message.Dates).isValid();
-
-  })
-
-  //  console.log(firsts);
+console.log("First messages of the day");
+console.log(firsts);
 }
 
+//count messages over days
 
-// var song_names = Object.keys(songs).map(function(key, i){
-// 	return (songs[key].innerText)
-//
-// })
+// function countMessagesOverDays(obj) {
+//   var countMessages = {};
+//   var prev = "";
+//   obj.forEach(function(message, i) {
+//     if (message.Dates.indexOf(prev) >= 0) {
+//       if (message.Sender == "EB") {
+//         countMessages[message.Sender] += 1;
+//       } else {
+//         countMessages[message.Sender] += 1;
+//       }
+//     }
+//     prev = message.Dates.slice(0, 1);
+//     countMessages.Dates = message.Dates;
+//   })
+//   console.log(countMessages);
+// }
