@@ -1,17 +1,27 @@
 html {
-  font-family: Helvetica, Arial, sans-serif;
-  font-size: 100%;
-  background: #333;
+  font-family: sans-serif;
+  font-size: 1em;
+  letter-spacing: 0.02em;
+}
+body {
+  margin: 0 !important;
+  background: #E0E0E0;
 }
 
 #page-wrapper {
-  width: 600px;
-  background: #FFF;
+  display: table;
+  table-layout: fixed;
+  width: 950px;
+  background: white;
   padding: 1em;
   margin: 1em auto;
-  min-height: 300px;
-  border-top: 5px solid #69c773;
-  box-shadow: 0 2px 10px rgba(0,0,0,0.8);
+  max-height: 200px;
+  border-radius: 1em;
+}
+
+#page-wrapper div {
+    display: table-cell;
+    height:100px;
 }
 
 h1 {
@@ -26,4 +36,71 @@ img {
   margin-top: 2em;
   width: 100%;
   overflow-x: auto;
+}
+
+::-webkit-file-upload-button {
+  background: #2196F3;
+  color: white;
+  padding: 1em;
+  border: none;
+}
+
+ul {
+  list-style-type: none;
+  margin: 0;
+  padding: 14px;
+  overflow: hidden;
+  background-color: #34AF23;
+}
+li {
+  float: right;
+}
+#page-wrapper li{
+  float: left;
+}
+#top-bar li a {
+  display: block;
+  color: white;
+  text-align: center;
+  padding: 0 48px;
+  text-decoration: none;
+}
+#one{
+  border-right: 1px solid #BDBDBD;
+}
+ol h2{
+  padding-left: 0;
+}
+ul span {
+  font-family: 'Dancing Script', cursive;
+  color: white;
+}
+
+#two li a{
+  text-decoration: none;
+  color: #2196F3;
+}
+
+td:first-child{
+  border-right: 1px solid #BDBDBD;
+}
+
+#insights {
+  margin-top: 0 !important;
+  display: table;
+  width: 950px;
+  background: white;
+  padding: 1em;
+  margin: 1em auto;
+  min-height: 200px;
+  border-radius: 1em;
+
+  color: #9E9E9E;
+}
+
+/*How does this work? the concept of vertical aligning the text using display:table*/
+#insights span{
+  text-align: center;
+  display: table-cell;
+  vertical-align: middle;
 }

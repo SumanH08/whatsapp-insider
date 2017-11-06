@@ -1,32 +1,92 @@
 <!DOCTYPE html>
 <html>
-  <head>
 
-    <meta charset="utf-16">
-    <title>JS Practice-app</title>
-    <link rel="stylesheet" href="style.css"/>
-    <script src="lodash.js"></script>
-    <script src="moment.js"></script>
-    <script src="https://code.highcharts.com/highcharts.js"></script>
-<script src="https://code.highcharts.com/modules/exporting.js"></script>
-<script src="highcharts.js"></script>
+<head>
+
+  <meta charset="utf-16">
+  <title>JS Practice-app</title>
+  <link rel="stylesheet" href="//fonts.googleapis.com/css?family=Dancing+Script">
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
+  <link rel="stylesheet" href="style.css">
+
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+  <script src="lodash.js"></script>
+  <script src="moment.js"></script>
+  <script src="https://code.highcharts.com/highcharts.js"></script>
+  <!-- <script src="https://code.highcharts.com/modules/exporting.js"></script> -->
+  <script src="helperFunctions.js" charset="utf-8"></script>
   <script src="script.js"></script>
 
 
-  </head>
+</head>
 
 <body>
+  <section id="top-bar">
+    <div>
+      <ul>
+        <span>Whatsapp insider</span>
+        <li><a href="default.asp">About</a></li>
+      </ul>
+    </div>
+  </section>
 
-  <div id="container" style="min-width: 310px; background: #333; max-width: 800px; height: 400px; margin: 0 auto"></div>
+  <section class="container">
+    <div id="page-wrapper">
+      <div id="one">
+        <p>Upload your whatsapp chat history as text file</p>
+        <div>
+          <input type="file" id="fileInput">
+            <p style="font-size:12px; margin-top:16px;">We respect your privacy! The file uploaded is not shared across anyone or stored anywhere. All the analysis is done in your browser. This can be verified by inspecting the network data in your browser.</p>
+        </div>
+      </div>
+      <div id="two">
+        <ol>
+          <lh>
+            <p>How to use:</p>
+          </lh>
+          <li>Visit <a href="http://web.whatsapp.com">web.whatsapp.com</a> and connect to your phone</li>
+          <li>Go to any chat window and download the chat history</li>
+          <li>Upload the .txt file here to get your analysis</li>
+        </ol>
+      </div>
+    </div>
+  </section>
 
-<div id="page-wrapper">
-		<h1>Text File Reader</h1>
-		<div>
-			Select a text file:
-			<input type="file" id="fileInput">
-		</div>
-		<pre id="fileDisplayArea"></pre>
-</div>
+  <section id="results" class="container">
 
+    <div>
+      <div class="row" style="margin-top: 64px">
+        <div class="col-md-3" style="text-align:center">
+        <h4>Insights</h4>
+        </div>
+        <div class="col-md-3"></div>
+        <div class="col-md-3"></div>
+        <div class="col-md-3"></div>
+        <div id="insights">
+          <!-- <span>Upload your chat file to see insights</span> -->
+          <p id="most-msgs"></p>
+        </div>
+      </div>
+
+    </div>
+
+    <div id="graphs"></div>
+    <div></div>
+  </section>
+
+
+
+
+  <div id="container" style="min-width: 310px; background: #333; max-width: 800px; max-height: 800px; margin: 0 auto"></div>
+
+  <div id="container1" style="min-width: 310px; background: #333; max-width: 800px; max-height: 800px; margin: 0 auto"></div>
+
+  <div id="container2" style="min-width: 310px; background: #333; max-width: 800px; max-height: 800px; margin: 0 auto"></div>
+
+  <div id="container3" style="min-width: 310px; background: #333; max-width: 800px; max-height: 800px; margin: 0 auto"></div>
+
+
+  <!-- <script src="highcharts.js"></script> -->
 </body>
+
 </html>
