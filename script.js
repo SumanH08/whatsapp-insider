@@ -25,57 +25,42 @@ window.onload = function() {
 function parseData(chatData) {
 
   var splitMessage = chatData.split("\n");
-  // var prev_message = "";
+  var prev_message = "";
 
   var chatArr = splitMessage.map(function(message, i) {
     var chatObj = {};
     var dateIndexValue = 0;
 
-    var in_date = message.slice(0, 8);
-    //the nested moment formats the string into a date string and then the outer moment will format it into the format provided
+    var in_date = message.slice(0, 10);
+
 
     var dateFormat = "DD/MM/YY";
-    // var checkValidDate = moment(in_date, dateFormat).isValid();
-    // if(checkValidDate){
-      var out_date = moment(moment(in_date, "DD/MM/YY")).format('DD/MM/YYYY');
+    var checkValidDate = moment(in_date, dateFormat).isValid();
+    if(checkValidDate){
+      //the nested moment formats the string into a date string and then the outer moment will format it into the format provided
+
+      var out_date = moment(in_date, "DD/MM/YYYY").format("DD/MM/YYYY")
+
       //This solutions works too
-      //console.log(moment(message.slice(0, 8), "DD/MM/YY").format("DD/MM/YYYY"));
+      // var out_date = moment(moment(in_date, "DD/MM/YY")).format('DD/MM/YYYY');
 
-      // console.log("Out dates now");
-      // console.log(out_date);
-      // console.log(message);
-      var formatted_chat = message.replace(message.slice(0, 8), out_date);
-    // }
-    // else {
-    //   prev_message = prev_message.concat(message);
-    //   return message;
-    // }
+      console.log("Out date here");
+      console.log(out_date);
 
-    // prev_message = message;
-    // var prevObj = {};
-    // chatArr = chatArr.filter(function(message, i) {
-    //   if (message.Dates == "" || message.Sender == "") {
-    //     prevObj.Text = prevObj.Text.concat(message.Text);
-    //     return false;
-    //   } else {
-    //     prevObj = message;
-    //     return message;
-    //   }
-    // })
-
+      var formatted_chat = message.replace(message.slice(0, 10), out_date);
+    }
+    else {
+      var formatted_chat = message;
+    }
 
     var year = formatted_chat.slice(6, 10);
     year = parseInt(year) || 0;
 
+    console.log("Formatted chat here");
+    console.log(formatted_chat);
+
     //check if valid date is present
     //year should be valid between index 6 and 10
-
-
-      // convert if any AM, PM to am and pm - to lower case
-      //   if (/AM: /.test(formatted_chat)){
-      //
-      //   }
-      //
 
       if (year > 2000) {
 
@@ -83,7 +68,7 @@ function parseData(chatData) {
 
       if (/am: /.test(formatted_chat) || /AM: /.test(formatted_chat)) {
         dateIndexValue = formatted_chat.indexOf("am: ") > 0 ? formatted_chat.indexOf("am: ") : formatted_chat.indexOf("AM: ");
-        // dateIndexValue = formatted_chat.indexOf("am: ")|| formatted_chat.indexOf("AM: ");
+
       } else {
         dateIndexValue = formatted_chat.indexOf("pm: ") > 0 ? formatted_chat.indexOf("pm: ") : formatted_chat.indexOf("PM: ");
       }
@@ -176,10 +161,10 @@ function solutions(chatArr) {
 
     //Calculate average word length
 
-    if (obj["Sender"].indexOf("EB") >= 0) {
+    if (obj["Sender"].indexOf(senders[0]) >= 0) {
       EBMessage = obj["Text"].split(" ");
       EBMessageLength += EBMessage.length;
-    } else if (obj["Sender"].indexOf("Suman") >= 0) {
+    } else if (obj["Sender"].indexOf(senders[1]) >= 0) {
       SumanMessage = obj["Text"].split(" ");
       SumanMessageLength += SumanMessage.length;
     }
@@ -188,9 +173,9 @@ function solutions(chatArr) {
 
     if (regex.test(obj["Text"])) {
 
-      if (obj["Sender"].indexOf("EB") >= 0) {
+      if (obj["Sender"].indexOf(senders[0]) >= 0) {
         emojiObj[obj.Sender] = numberOfEmojisByEB++;
-      } else if (obj["Sender"].indexOf("Suman") >= 0) {
+      } else if (obj["Sender"].indexOf(senders[1]) >= 0) {
         emojiObj[obj.Sender] = numberOfEmojisBySuman++;
       }
     }
@@ -207,15 +192,14 @@ function solutions(chatArr) {
     textArray.push(obj.Text.split(" "));
 
     if (obj["Text"].indexOf("<‎image omitted>") >= 0) {
-      if (obj["Sender"] == "EB") {
+      if (obj["Sender"] == senders[0]) {
         imageObj[obj.Sender] = EBimages++;
-      } else if (obj["Sender"] == "Suman Hiremath") {
+      } else if (obj["Sender"] == senders[1]) {
         imageObj[obj.Sender] = SumanImages++;
       }
     }
 
   })
-
 
   textArray = _.flattenDeep(textArray);
 
@@ -233,6 +217,7 @@ function solutions(chatArr) {
   // Object.values(obj) – returns an array of values.
   // Object.entries(obj) – returns an array of [key, value] pairs
 
+  //sorting most used words below??
   let entries = Object.entries(result);
   let sorted = entries.sort((a, b) => b[1] - a[1]);
   console.log(sorted);
@@ -243,11 +228,29 @@ function solutions(chatArr) {
   })
   sorted_moreThan3 = sorted_moreThan3.slice(0, 10);
 
+  //displaying results in html
+
   var messenger = (messageKing > messageQueen ? senders[0]+": " + messageKing : senders[1]+": " + messageQueen)
 
-  $("#most-msgs").html(`<p>The person who sent the most messsages ->${messenger}</p>`);
+  var avg_word_length_0 = (EBMessageLength/messageKing).toFixed(4);
+  var avg_word_length_1 = (SumanMessageLength/messageQueen).toFixed(4);
 
 
+  $("#most-msgs").html(`<p>a. The person who sent the most messsages ->${messenger}<br><br>b. ${senders[0]} total word length is: ${EBMessageLength}<br>c. ${senders[1]} total word length is: ${SumanMessageLength}<br><br>d. ${senders[0]} average word length per message: ${avg_word_length_0}<br>e. ${senders[1]} average word length per message: ${avg_word_length_1}<br><br>f. Emojis by each sender, ${senders[0]}: ${emojiObj[senders[0]]}<br>${senders[1]}: ${emojiObj[senders[1]]}<br><br> Ten most used words in the conversation:<br>
+    1. ${sorted_moreThan3[0][0]}: ${sorted_moreThan3[0][1]}<br>
+    2. ${sorted_moreThan3[1][0]}: ${sorted_moreThan3[1][1]}<br>
+    3. ${sorted_moreThan3[2][0]}: ${sorted_moreThan3[2][1]}<br>
+    4. ${sorted_moreThan3[3][0]}: ${sorted_moreThan3[3][1]}<br>
+    5. ${sorted_moreThan3[4][0]}: ${sorted_moreThan3[4][1]}<br>
+    6. ${sorted_moreThan3[5][0]}: ${sorted_moreThan3[5][1]}<br>
+    7. ${sorted_moreThan3[6][0]}: ${sorted_moreThan3[6][1]}<br>
+    8. ${sorted_moreThan3[7][0]}: ${sorted_moreThan3[7][1]}<br>
+    9. ${sorted_moreThan3[8][0]}: ${sorted_moreThan3[8][1]}<br>
+    10. ${sorted_moreThan3[9][0]}: ${sorted_moreThan3[9][1]}<br><br>
+    g. Images sent by ${senders[0]}: ${imageObj[senders[0]]}<br>
+    Images sent by ${senders[1]} : ${imageObj[senders[1]]}</p>`)
+
+  //
   // console.log("This is the person who sent most messages -> " + (messageKing > messageQueen ? "EB: " + messageKing : "Suman: " + messageQueen));
   //
   // console.log("EB's total word length:" + (EBMessageLength));
@@ -256,12 +259,12 @@ function solutions(chatArr) {
   // console.log("EB's average word length per message:" + (EBMessageLength / messageKing).toFixed(4));
   //
   // console.log("Suman's average word length per message:" + (SumanMessageLength / messageQueen).toFixed(4));
-  //
+  // //
   // console.log("Emojis by each sender", emojiObj);
-  //
+  // //
   // console.log("10 most used words now");
   // console.log(sorted_moreThan3);
-
+  //
   //
   // console.log("Images by each sender", imageObj);
 
@@ -269,6 +272,8 @@ function solutions(chatArr) {
   var EBDayArr = [],
     SumanDayArr = [];
 
+    console.log("Chat array here to check dates");
+    console.log(chatArr);
   // EBDayArr = [[Date.UTC(2017, 00, 02), 10], [Date.UTC(2017, 00, 03), 8]];
 
   firstMessageArr.forEach(function(message, i) {
@@ -276,22 +281,28 @@ function solutions(chatArr) {
     var dateArray = dateStr.split("/");
     var dateObj = Date.UTC(dateArray[2], dateArray[1] - 1, dateArray[0]);
 
+
     var timeStr = message.Dates.slice(12, 23);
+    console.log("Time string now");
+    console.log(timeStr);
     var timeArray = timeStr.split(":");
-    if (timeStr.indexOf("pm") >= 0 && parseInt(timeArray[0]) >= 1) {
+    if ((timeStr.indexOf("pm") >= 0 || timeStr.indexOf("PM") >= 0 )&& parseInt(timeArray[0]) >= 1) {
       timeArray[0] = parseInt(timeArray[0]) + 12
     }
 
     timeArray[1] = parseInt(timeArray[1]) / 60;
     timeArray[0] = parseInt(timeArray[0]) + parseFloat(timeArray[1].toFixed(2));
 
-    if (message.Sender == "EB") {
+    if (message.Sender == senders[0]) {
       EBDayArr.push([dateObj, timeArray[0]]);
     } else {
       SumanDayArr.push([dateObj, timeArray[0]]);
     }
   })
 
+
+console.log("EBDAyarr now");
+console.log(EBDayArr);
 
   Highcharts.chart('container', {
     chart: {
@@ -302,6 +313,7 @@ function solutions(chatArr) {
       text: 'First message'
     },
     xAxis: {
+      min: Date.UTC(2017, 1, 1),
       type: 'datetime',
       title: {
         text: 'Days'
@@ -324,11 +336,11 @@ function solutions(chatArr) {
       }
     },
     series: [{
-        name: 'EB',
+        name: senders[0],
         data: EBDayArr
       },
       {
-        name: 'Suman',
+        name: senders[1],
         data: SumanDayArr
       }
     ]
@@ -352,8 +364,8 @@ function solutions(chatArr) {
       useHTML: true,
       formatter: function() {
         return `<div>
-          <div>Sent by EB: ${this.y}</div>
-          <div>Sent by Suman: ${this.total - this.y}</div>
+          <div>Sent by ${senders[0]}: ${this.y}</div>
+          <div>Sent by ${senders[1]}: ${this.total - this.y}</div>
           <div>Total messages: ${this.total}</div>
           </div>`
       }
@@ -366,7 +378,7 @@ function solutions(chatArr) {
     },
     yAxis: {
       min: 0,
-      // max: 400,
+      //  max: 400,
       labels: {
         rotation: 30
       },
@@ -381,11 +393,11 @@ function solutions(chatArr) {
       }
     },
     series: [{
-        name: 'EB',
+        name: senders[0],
         data: cumulativeMessages.eb
       },
       {
-        name: 'Suman',
+        name: senders[1],
         data: cumulativeMessages.suman
       }
     ]
@@ -508,129 +520,4 @@ Highcharts.chart('container3', {
     }]
 });
 
-
-}
-
-//func that calculates the first sender of a message per day
-
-function firstMessage(obj) {
-  var prev = "";
-  var firsts = [];
-  var format = 'hh:mm:ss A';
-  var time = moment('06:00:00', format);
-  var currTime;
-
-  //filters messages sent after 6 am, resulting in an obj consisting of messages exchanged only after 6 am each day
-  obj = obj.filter(function(message, i) {
-    currTime = moment(message.Dates.slice(12, 23), format);
-    if (currTime > time) {
-      return true;
-    }
-  })
-  //determines the first message exchanged each day
-  obj.forEach(function(message, i) {
-    if (message.Dates.indexOf(prev) < 0 || prev == "") {
-      firsts.push(message);
-    }
-    prev = message.Dates.slice(0, 9);
-  })
-  return firsts;
-  // console.log("First messages of the day");
-  // console.log(firsts);
-}
-
-//count messages over days
-
-function countMessagesOverDays(obj) {
-  var countMessages = {};
-  var prev = "";
-  var uniqueDateArray = [];
-  obj.forEach(function(message, i) {
-    if (message.Dates.indexOf(prev) < 0 || prev == "") {
-      uniqueDateArray.push(message.Dates.slice(0, 10));
-    }
-    prev = message.Dates.slice(0, 10);
-  })
-
-  uniqueDateArray.forEach(function(dateItem, index) {
-    var EBcount = 0,
-      SHCount = 0;
-
-    obj.forEach(function(message, i) {
-      if (message.Dates.slice(0, 10).indexOf(dateItem) >= 0) {
-        if (message.Sender == "EB") {
-          EBcount++;
-          countMessages[dateItem] = {
-            "EB": EBcount,
-            "Suman": SHCount
-          }
-        } else {
-          SHCount++;
-          countMessages[dateItem] = {
-            "EB": EBcount,
-            "Suman": SHCount
-          }
-        }
-      }
-    })
-  })
-
-  var EBArr = Object.keys(countMessages).map(function(date, i) {
-    var dateSplit = date.split("/");
-    return [Date.UTC(dateSplit[2], dateSplit[1] - 1, dateSplit[0]), countMessages[date]["EB"]]
-  })
-
-  var sumanArr = Object.keys(countMessages).map(function(date, i) {
-    var dateSplit = date.split("/");
-    return [Date.UTC(dateSplit[2], dateSplit[1] - 1, dateSplit[0]), countMessages[date]["Suman"]]
-  })
-
-  return {
-    eb: EBArr,
-    suman: sumanArr
-  };
-
-}
-
-//When do we talk the most (by hour)
-
-function primeTime(chatArr) {
-  var primeHour = {};
-  var hours, am_pm, hotHours;
-  chatArr.forEach(function(message, i) {
-    hours = message.Dates.slice(12, 14);
-    am_pm = message.Dates.slice(20, 23);
-    hotHours = hours + am_pm;
-    if (primeHour[hotHours] == undefined) {
-      primeHour[hotHours] = 1;
-    } else {
-      primeHour[hotHours] = primeHour[hotHours] + 1;
-    }
-  })
-  console.log(primeHour);
-  return primeHour;
-}
-
-//calculate percentage of messages sent in the morning vs night
-
-function percentageOfMessages(messages){
-  var morn = 0, eve = 0;
-  var format = 'hh:mm:ss A';
-  var atMorning = moment('06:00:00', format);
-  var atNoon = moment('12:00:00', format);
-  var currTime;
-  var messageObj = {};
-
-  //calculates messages sent between 6 am to 12 pm in one bucket and those sent later in another bucket as eveningMessages
-  messages.forEach(function(message, i) {
-    currTime = moment(message.Dates.slice(12, 23), format);
-    if (currTime > atMorning && currTime <= atNoon) {
-       messageObj["morningMessages"] = morn++;
-    }
-    else {
-      messageObj["eveningMessages"] = eve++;
-    }
-  })
-  console.log(messageObj);
-  return messageObj;
 }
