@@ -27,63 +27,56 @@ function parseData(chatData) {
   var splitMessage = chatData.split("\n");
   var prev_message = "";
 
+  console.log("Printing after splitting");
+  console.log(splitMessage);
+
   var chatArr = splitMessage.map(function(message, i) {
     var chatObj = {};
     var dateIndexValue = 0;
 
-    var in_date = message.slice(0, 10);
+    //gives the index of the point where the date ends
+    var dateEndIndex = message.indexOf(" ");
+    var in_date = message.slice(0, dateEndIndex);
 
+    console.log("In date here");
+    console.log(in_date);
 
     var dateFormat = "DD/MM/YY";
     var checkValidDate = moment(in_date, dateFormat).isValid();
-    if(checkValidDate){
+
+    //check if the date is a valid string, not null and in a valid format with"/"
+    if (checkValidDate && (in_date.length >= 6) && ((in_date.match(/.+\/.+\/.+/g) || []).length) == 2) {
+
       //the nested moment formats the string into a date string and then the outer moment will format it into the format provided
-
       var out_date = moment(in_date, "DD/MM/YYYY").format("DD/MM/YYYY")
-
       //This solutions works too
       // var out_date = moment(moment(in_date, "DD/MM/YY")).format('DD/MM/YYYY');
-
-      console.log("Out date here");
-      console.log(out_date);
-
-      var formatted_chat = message.replace(message.slice(0, 10), out_date);
-    }
-    else {
+      var formatted_chat = message.replace(message.slice(0, dateEndIndex - 1), out_date);
+    } else {
       var formatted_chat = message;
     }
-
     var year = formatted_chat.slice(6, 10);
     year = parseInt(year) || 0;
 
-    console.log("Formatted chat here");
-    console.log(formatted_chat);
-
     //check if valid date is present
     //year should be valid between index 6 and 10
-
-      if (year > 2000) {
-
-        //assigning appropriate strings to date, sender and text keys in the chatObj
-
+    if (year > 2000) {
+      //assigning appropriate strings to date, sender and text keys in the chatObj
       if (/am: /.test(formatted_chat) || /AM: /.test(formatted_chat)) {
         dateIndexValue = formatted_chat.indexOf("am: ") > 0 ? formatted_chat.indexOf("am: ") : formatted_chat.indexOf("AM: ");
-
       } else {
         dateIndexValue = formatted_chat.indexOf("pm: ") > 0 ? formatted_chat.indexOf("pm: ") : formatted_chat.indexOf("PM: ");
       }
-      chatObj.Dates = formatted_chat.substring(0, dateIndexValue + 2);
 
+      chatObj.Dates = formatted_chat.substring(0, dateIndexValue + 2);
       var senderIndexValue = formatted_chat.indexOf(": ", dateIndexValue + 3);
       chatObj.Sender = formatted_chat.substring(dateIndexValue + 4, senderIndexValue).trim();
-
-      chatObj.Text = formatted_chat.substring(senderIndexValue + 2);
+      chatObj.Text = formatted_chat.substring(senderIndexValue + 2).trim();
     } else {
       chatObj.Dates = "";
       chatObj.Sender = "";
-      chatObj.Text = formatted_chat;
+      chatObj.Text = formatted_chat.trim();
     }
-
     return chatObj;
   })
 
@@ -104,23 +97,33 @@ function parseData(chatData) {
   console.log("After parsing below");
   console.log(chatArr);
 
+  //delete all the missed voice calls from the chatArr and put them in a different array
+
+  chatArr = chatArr.filter(function(message, i) {
+    if (message.Text.indexOf("Missed Voice Call") >= 0 || message.Text.indexOf("Missed Video Call") >= 0) {
+      return false;
+    } else {
+      return true;
+    }
+  })
+  console.log("Printing messages after filtering extras");
+  console.log(chatArr);
+
   //get the sender names
   // var senders = _.(chatArr).map(_.keys).flatten().unique().value();
   // console.log("These are my senders:")
   // console.log(senders);
-
   var prev = "";
-  chatArr.forEach(function(message, i){
-    if(message.Sender.indexOf(prev) < 0 || prev == ""){
+  chatArr.forEach(function(message, i) {
+    if (message.Sender.indexOf(prev) < 0 || prev == "") {
       senders.push(message.Sender);
     }
     prev = message.Sender;
   })
 
-    console.log("Senders now");
-    console.log(_.uniq(senders));
+  console.log("Senders now");
+  console.log(_.uniq(senders));
 
-    senders = senders.slice(0, 2)
 
   //Replacing all double quotes with single quotes
 
@@ -222,18 +225,18 @@ function solutions(chatArr) {
   let sorted = entries.sort((a, b) => b[1] - a[1]);
   console.log(sorted);
 
-  var sorted_moreThan3 = sorted.filter(function(item, i){
-    if(item[0].length > 3)
-    return true;
+  var sorted_moreThan3 = sorted.filter(function(item, i) {
+    if (item[0].length > 3)
+      return true;
   })
   sorted_moreThan3 = sorted_moreThan3.slice(0, 10);
 
   //displaying results in html
 
-  var messenger = (messageKing > messageQueen ? senders[0]+": " + messageKing : senders[1]+": " + messageQueen)
+  var messenger = (messageKing > messageQueen ? senders[0] + ": " + messageKing : senders[1] + ": " + messageQueen)
 
-  var avg_word_length_0 = (EBMessageLength/messageKing).toFixed(4);
-  var avg_word_length_1 = (SumanMessageLength/messageQueen).toFixed(4);
+  var avg_word_length_0 = (EBMessageLength / messageKing).toFixed(4);
+  var avg_word_length_1 = (SumanMessageLength / messageQueen).toFixed(4);
 
 
   $("#most-msgs").html(`<p>a. The person who sent the most messsages ->${messenger}<br><br>b. ${senders[0]} total word length is: ${EBMessageLength}<br>c. ${senders[1]} total word length is: ${SumanMessageLength}<br><br>d. ${senders[0]} average word length per message: ${avg_word_length_0}<br>e. ${senders[1]} average word length per message: ${avg_word_length_1}<br><br>f. Emojis by each sender, ${senders[0]}: ${emojiObj[senders[0]]}<br>${senders[1]}: ${emojiObj[senders[1]]}<br><br> Ten most used words in the conversation:<br>
@@ -272,8 +275,8 @@ function solutions(chatArr) {
   var EBDayArr = [],
     SumanDayArr = [];
 
-    console.log("Chat array here to check dates");
-    console.log(chatArr);
+  console.log("Chat array here to check dates");
+  console.log(chatArr);
   // EBDayArr = [[Date.UTC(2017, 00, 02), 10], [Date.UTC(2017, 00, 03), 8]];
 
   firstMessageArr.forEach(function(message, i) {
@@ -281,12 +284,9 @@ function solutions(chatArr) {
     var dateArray = dateStr.split("/");
     var dateObj = Date.UTC(dateArray[2], dateArray[1] - 1, dateArray[0]);
 
-
     var timeStr = message.Dates.slice(12, 23);
-    console.log("Time string now");
-    console.log(timeStr);
     var timeArray = timeStr.split(":");
-    if ((timeStr.indexOf("pm") >= 0 || timeStr.indexOf("PM") >= 0 )&& parseInt(timeArray[0]) >= 1) {
+    if ((timeStr.indexOf("pm") >= 0 || timeStr.indexOf("PM") >= 0) && parseInt(timeArray[0]) >= 1) {
       timeArray[0] = parseInt(timeArray[0]) + 12
     }
 
@@ -300,9 +300,6 @@ function solutions(chatArr) {
     }
   })
 
-
-console.log("EBDAyarr now");
-console.log(EBDayArr);
 
   Highcharts.chart('container', {
     chart: {
@@ -348,9 +345,8 @@ console.log(EBDayArr);
   //---------------------------------------------------------------------------
   //calling countMessagesOverDays function to display graph using Highcharts
   var cumulativeMessages = countMessagesOverDays(chatArr)
-  // console.log("cumulativeMessages here");
-  // console.log(cumulativeMessages);
-
+  console.log("Messages over days");
+  console.log(cumulativeMessages);
 
   Highcharts.chart('container1', {
     chart: {
@@ -467,57 +463,56 @@ console.log(EBDayArr);
       }
     },
     series: [{
-        name: 'EB',
-        data: primeArr
-      }
-    ]
+      name: '# of messages exchanged',
+      data: primeArr
+    }]
   });
 
-var percentObj = percentageOfMessages(chatArr);
-var morningPercent = ((percentObj["morningMessages"] / (percentObj["morningMessages"] + percentObj["eveningMessages"]))*100).toFixed(2);
-var eveningPercent = ((percentObj["eveningMessages"] / (percentObj["morningMessages"] + percentObj["eveningMessages"]))*100).toFixed(2);
-console.log(morningPercent, eveningPercent);
+  var percentObj = percentageOfMessages(chatArr);
+  var morningPercent = ((percentObj["morningMessages"] / (percentObj["morningMessages"] + percentObj["eveningMessages"])) * 100).toFixed(2);
+  var eveningPercent = ((percentObj["eveningMessages"] / (percentObj["morningMessages"] + percentObj["eveningMessages"])) * 100).toFixed(2);
+  console.log(morningPercent, eveningPercent);
 
-Highcharts.chart('container3', {
+  Highcharts.chart('container3', {
     chart: {
-        plotBackgroundColor: null,
-        plotBorderWidth: null,
-        plotShadow: false,
-        type: 'pie'
+      plotBackgroundColor: null,
+      plotBorderWidth: null,
+      plotShadow: false,
+      type: 'pie'
     },
     title: {
-        text: 'Percentage of messages exchanged in the morning vs night'
+      text: 'Percentage of messages exchanged in the morning vs night'
     },
     tooltip: {
-        pointFormat: '{series.name}: <b>{point.percentage:.1f}%</b>'
+      pointFormat: '{series.name}: <b>{point.percentage:.1f}%</b>'
     },
     plotOptions: {
-        pie: {
-            allowPointSelect: true,
-            cursor: 'pointer',
-            dataLabels: {
-                enabled: true,
-                format: '<b>{point.name}</b>: {point.percentage:.1f} %',
-                style: {
-                    color: (Highcharts.theme && Highcharts.theme.contrastTextColor) || 'black'
-                }
-            },
-            showInLegend: true
-        }
+      pie: {
+        allowPointSelect: true,
+        cursor: 'pointer',
+        dataLabels: {
+          enabled: true,
+          format: '<b>{point.name}</b>: {point.percentage:.1f} %',
+          style: {
+            color: (Highcharts.theme && Highcharts.theme.contrastTextColor) || 'black'
+          }
+        },
+        showInLegend: true
+      }
     },
     series: [{
-        name: 'Messages',
-        colorByPoint: true,
-        data: [{
-            name: 'Morning messages',
-            y: 19
-        }, {
-            name: 'Night messages',
-            y: 81,
-            sliced: true,
-            selected: true
-        }]
+      name: 'Messages',
+      colorByPoint: true,
+      data: [{
+        name: 'Morning messages',
+        y: 19
+      }, {
+        name: 'Night messages',
+        y: 81,
+        sliced: true,
+        selected: true
+      }]
     }]
-});
+  });
 
 }

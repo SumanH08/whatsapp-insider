@@ -7,6 +7,21 @@ body {
   margin: 0 !important;
   background: #E0E0E0;
 }
+.container{
+  max-width: 950px;
+}
+#top-bar{
+  width: 950px;
+}
+#top-bar li a {
+  display: block;
+  color: white;
+  text-decoration: none;
+}
+
+#top-bar-div{
+  width: 922px;
+}
 
 #page-wrapper {
   display: table;
@@ -45,26 +60,20 @@ img {
   border: none;
 }
 
-ul {
+/*ul {
   list-style-type: none;
   margin: 0;
   padding: 14px;
   overflow: hidden;
   background-color: #34AF23;
-}
+}*/
 li {
   float: right;
 }
 #page-wrapper li{
   float: left;
 }
-#top-bar li a {
-  display: block;
-  color: white;
-  text-align: center;
-  padding: 0 48px;
-  text-decoration: none;
-}
+
 #one{
   border-right: 1px solid #BDBDBD;
 }

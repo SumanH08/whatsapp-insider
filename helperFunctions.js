@@ -57,6 +57,8 @@ function countMessagesOverDays(obj) {
   var countMessages = {};
   var prev = "";
   var uniqueDateArray = [];
+
+  //uniqueDateArray will now contain all the unique dates in the conversation
   obj.forEach(function(message, i) {
     if (message.Dates.indexOf(prev) < 0 || prev == "") {
       uniqueDateArray.push(message.Dates.slice(0, 10));
@@ -86,6 +88,9 @@ function countMessagesOverDays(obj) {
       }
     })
   })
+
+  console.log("MEssages over days");
+  console.log(countMessages);
 
   var EBArr = Object.keys(countMessages).map(function(date, i) {
     var dateSplit = date.split("/");
@@ -119,6 +124,7 @@ function primeTime(chatArr) {
       primeHour[hotHours] = primeHour[hotHours] + 1;
     }
   })
+  console.log("Prime hour now");
   console.log(primeHour);
   return primeHour;
 }
