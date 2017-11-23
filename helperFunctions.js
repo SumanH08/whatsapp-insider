@@ -57,7 +57,8 @@ function countMessagesOverDays(obj) {
   var countMessages = {};
   var prev = "";
   var uniqueDateArray = [];
-
+  var key1 = senders[0];
+  var key2 = senders[1];
   //uniqueDateArray will now contain all the unique dates in the conversation
   obj.forEach(function(message, i) {
     if (message.Dates.indexOf(prev) < 0 || prev == "") {
@@ -103,8 +104,8 @@ function countMessagesOverDays(obj) {
   })
 
   return {
-    eb: EBArr,
-    suman: sumanArr
+    [key1]: EBArr,
+    [key2]: sumanArr
   };
 
 }
@@ -132,23 +133,35 @@ function primeTime(chatArr) {
 //calculate percentage of messages sent in the morning vs night
 
 function percentageOfMessages(messages){
-  var morn = 0, eve = 0;
+  var morn = 0, nooning = 0, nighting = 0;
   var format = 'hh:mm:ss A';
   var atMorning = moment('06:00:00', format);
   var atNoon = moment('12:00:00', format);
+  var atNight = moment('18:00:00', format);
   var currTime;
   var messageObj = {};
+  var morning = [],  noon = [], night = [];
 
   //calculates messages sent between 6 am to 12 pm in one bucket and those sent later in another bucket as eveningMessages
   messages.forEach(function(message, i) {
     currTime = moment(message.Dates.slice(12, 23), format);
-    if (currTime > atMorning && currTime <= atNoon) {
+    if (currTime >= atMorning && currTime <= atNoon) {
        messageObj["morningMessages"] = morn++;
+       morning.push(message);
+    }
+    else if(currTime >= atNoon && currTime <= atNight){
+      messageObj["noonMessages"] = nooning++;
+      noon.push(message);
     }
     else {
-      messageObj["eveningMessages"] = eve++;
+      messageObj["nightMessages"] = nighting++;
+      night.push(message);
     }
   })
   console.log(messageObj);
+  console.log("Morning and evening messages");
+  console.log(morning);
+  console.log(noon);
+  console.log(night);
   return messageObj;
 }

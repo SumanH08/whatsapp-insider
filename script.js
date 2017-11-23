@@ -27,30 +27,26 @@ function parseData(chatData) {
   var splitMessage = chatData.split("\n");
   var prev_message = "";
 
-  console.log("Printing after splitting");
-  console.log(splitMessage);
-
   var chatArr = splitMessage.map(function(message, i) {
     var chatObj = {};
     var dateIndexValue = 0;
 
     //gives the index of the point where the date ends
     var dateEndIndex = message.indexOf(" ");
-    var in_date = message.slice(0, dateEndIndex);
-
-    console.log("In date here");
-    console.log(in_date);
-
+    var in_date = message.slice(0, dateEndIndex-1);
     var dateFormat = "DD/MM/YY";
     var checkValidDate = moment(in_date, dateFormat).isValid();
 
+    //date regex for DD/MM/YY and DD/MM/YYYY formats
+    var dateReg = /^\d{2}[./-]\d{2}[./-]\d{4}$/
+    var dateReg2 = /^\d{2}[./-]\d{2}[./-]\d{2}$/
     //check if the date is a valid string, not null and in a valid format with"/"
-    if (checkValidDate && (in_date.length >= 6) && ((in_date.match(/.+\/.+\/.+/g) || []).length) == 2) {
-
+    if (checkValidDate && (in_date.length >= 6) && (dateReg.test(in_date) || dateReg2.test(in_date))) {
       //the nested moment formats the string into a date string and then the outer moment will format it into the format provided
       var out_date = moment(in_date, "DD/MM/YYYY").format("DD/MM/YYYY")
       //This solutions works too
       // var out_date = moment(moment(in_date, "DD/MM/YY")).format('DD/MM/YYYY');
+
       var formatted_chat = message.replace(message.slice(0, dateEndIndex - 1), out_date);
     } else {
       var formatted_chat = message;
@@ -69,9 +65,18 @@ function parseData(chatData) {
       }
 
       chatObj.Dates = formatted_chat.substring(0, dateIndexValue + 2);
-      var senderIndexValue = formatted_chat.indexOf(": ", dateIndexValue + 3);
-      chatObj.Sender = formatted_chat.substring(dateIndexValue + 4, senderIndexValue).trim();
-      chatObj.Text = formatted_chat.substring(senderIndexValue + 2).trim();
+
+      var senderIndexValue = formatted_chat.indexOf(": ", dateIndexValue + 3) > 0 ? formatted_chat.indexOf(": ", dateIndexValue + 3) : 0;
+
+      //if there is no sender, i.e. missed voice call/missed video call won't have sender recorded, then assign a null string to sender
+      if(senderIndexValue > 0){
+        chatObj.Sender = formatted_chat.substring(dateIndexValue + 4, senderIndexValue).trim();
+        chatObj.Text = formatted_chat.substring(senderIndexValue + 2).trim();
+      }
+      else {
+        chatObj.Sender = "";
+        chatObj.Text = formatted_chat.substring(dateIndexValue + 3).trim();
+      }
     } else {
       chatObj.Dates = "";
       chatObj.Sender = "";
@@ -390,11 +395,11 @@ function solutions(chatArr) {
     },
     series: [{
         name: senders[0],
-        data: cumulativeMessages.eb
+        data: cumulativeMessages[senders[0]]
       },
       {
         name: senders[1],
-        data: cumulativeMessages.suman
+        data: cumulativeMessages[senders[1]]
       }
     ]
   });
@@ -405,7 +410,9 @@ function solutions(chatArr) {
   var prime_24;
   var primeHour_messages = [];
   primeHour_messages = Object.keys(prime).map(function(key, i) {
-    if (key.indexOf("pm") >= 0 && parseInt(key.slice(0, 2)) >= 1 && parseInt(key.slice(0, 2)) < 12) {
+
+//converting times into 24hr format; returning the time and the value(# of messages)
+    if ((key.indexOf("pm") >= 0 || key.indexOf("PM") >= 0) && parseInt(key.slice(0, 2)) >= 1 && parseInt(key.slice(0, 2)) < 12) {
       prime_24 = prime[key];
       key = parseInt(key.slice(0, 2)) + 12 + ":pm";
       return [key, prime_24];
@@ -413,9 +420,9 @@ function solutions(chatArr) {
       return [key, prime[key]];
     }
   })
-
+//converting 12am to 24am since the previous code logic doesn't solve this issue
   var primeArr = primeHour_messages.map(function(item, i) {
-    if (item[0] == "12 am") {
+    if (item[0] == "12 am" || item[0] == "12 AM") {
       item[0] = "24 am";
     }
     return [Date.UTC(2017, 9, 1, parseInt(item[0])), item[1]];
@@ -469,9 +476,14 @@ function solutions(chatArr) {
   });
 
   var percentObj = percentageOfMessages(chatArr);
-  var morningPercent = ((percentObj["morningMessages"] / (percentObj["morningMessages"] + percentObj["eveningMessages"])) * 100).toFixed(2);
-  var eveningPercent = ((percentObj["eveningMessages"] / (percentObj["morningMessages"] + percentObj["eveningMessages"])) * 100).toFixed(2);
-  console.log(morningPercent, eveningPercent);
+  var morningPercent = ((percentObj["morningMessages"] / (percentObj["morningMessages"] + percentObj["noonMessages"] + percentObj["nightMessages"] )) * 100).toFixed(2);
+
+  var noonPercent = ((percentObj["noonMessages"] / (percentObj["morningMessages"] + percentObj["noonMessages"] + percentObj["nightMessages"] )) * 100).toFixed(2);
+
+  var nightPercent = ((percentObj["nightMessages"] / (percentObj["morningMessages"] + percentObj["noonMessages"] + percentObj["nightMessages"] )) * 100).toFixed(2);
+
+  console.log("Printing morning percent and evening percent now");
+  console.log(morningPercent, noonPercent, nightPercent);
 
   Highcharts.chart('container3', {
     chart: {
@@ -481,10 +493,10 @@ function solutions(chatArr) {
       type: 'pie'
     },
     title: {
-      text: 'Percentage of messages exchanged in the morning vs night'
+      text: 'Percentage of messages exchanged in the morning vs noon vs night'
     },
     tooltip: {
-      pointFormat: '{series.name}: <b>{point.percentage:.1f}%</b>'
+      pointFormat: '{series.name}: <b>{point.percentage:.2f}%</b>'
     },
     plotOptions: {
       pie: {
@@ -492,7 +504,7 @@ function solutions(chatArr) {
         cursor: 'pointer',
         dataLabels: {
           enabled: true,
-          format: '<b>{point.name}</b>: {point.percentage:.1f} %',
+          format: '<b>{point.name}</b>: {point.percentage:.2f} %',
           style: {
             color: (Highcharts.theme && Highcharts.theme.contrastTextColor) || 'black'
           }
@@ -505,10 +517,15 @@ function solutions(chatArr) {
       colorByPoint: true,
       data: [{
         name: 'Morning messages',
-        y: 19
-      }, {
+        y: parseFloat(morningPercent)
+      },
+      {
+        name: 'Noon messages',
+        y: parseFloat(noonPercent)
+      },
+      {
         name: 'Night messages',
-        y: 81,
+        y: parseFloat(nightPercent),
         sliced: true,
         selected: true
       }]
