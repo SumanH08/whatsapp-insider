@@ -64,7 +64,7 @@ img {
 
 ul {
   list-style-type: none;
-  padding: 0 29px;
+  padding: 0 15px;
 }
 li {
   float: right;
@@ -93,7 +93,14 @@ td:first-child{
   border-right: 1px solid #BDBDBD;
 }
 
-#insights {
+#sender-info{
+  padding: 1.5em 0;
+  text-align: center;
+  font-family: Times;
+  font-size: 18px;
+}
+
+.insights {
   margin-top: 0 !important;
   display: table;
   width: 920px;
