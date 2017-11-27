@@ -94,7 +94,7 @@ td:first-child{
 }
 
 #sender-info{
-  padding: 1.5em 0;
+  padding: 1em 0 0 0;
   text-align: center;
   font-family: Times;
   font-size: 18px;

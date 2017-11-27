@@ -93,7 +93,7 @@ function solutions(chatArr) {
   })
   sorted_moreThan3 = sorted_moreThan3.slice(0, 10);
 
-  //result adjustments to display insights 
+  //result adjustments to display insights
   var most = messageKing > messageQueen ? senders[0] : senders[1]
   var messenger = (messageKing > messageQueen ? senders[0] + ": " + messageKing : senders[1] + ": " + messageQueen);
   var maxWordLength = EBMessageLength > SumanMessageLength ? senders[0] : senders[1]
@@ -118,6 +118,9 @@ function solutions(chatArr) {
   console.log(initiator);
 
   var initiator_king = initiator[senders[0]] > initiator[senders[1]] ? senders[0] : senders[1]
+
+  $("h3").css("color", "black");
+
 
   $("#most-msgs").html(`<p>a. ${most} sent the most messsages among the two of you - ${senders[0]}: ${messageKing}, ${senders[1]}: ${messageQueen} <br><br>
     b. ${maxWordLength} has used ${wordDiff} words more than ${minWordLength}<br><br>
@@ -181,7 +184,7 @@ function solutions(chatArr) {
     }
   })
 
-  Highcharts.chart('container', {
+  Highcharts.stockChart('container', {
     chart: {
       type: 'column'
     },
@@ -189,6 +192,9 @@ function solutions(chatArr) {
     title: {
       text: 'First message'
     },
+    rangeSelector:{
+              enabled:true
+            },
     xAxis: {
       min: Date.UTC(2017, 1, 1),
       type: 'datetime',
@@ -228,55 +234,73 @@ function solutions(chatArr) {
   console.log("Messages over days");
   console.log(cumulativeMessages);
 
-  Highcharts.chart('container1', {
-    chart: {
-      type: 'column'
-    },
-    colors: ['#F0F', '#08F'],
-    title: {
-      text: 'Total messages over days'
-    },
-    tooltip: {
-      useHTML: true,
-      formatter: function() {
-        return `<div>
-          <div>Sent by ${senders[0]}: ${this.y}</div>
-          <div>Sent by ${senders[1]}: ${this.total - this.y}</div>
-          <div>Total messages: ${this.total}</div>
-          </div>`
-      }
-    },
-    xAxis: {
-      type: 'datetime',
+  Highcharts.stockChart('container1', {
+
+      colors: ['#F00', '#00F'],
       title: {
-        text: 'Days'
-      }
-    },
-    yAxis: {
-      min: 0,
-      //  max: 400,
-      labels: {
-        rotation: 30
+          text: 'Total messages over days'
       },
-      title: {
-        text: 'messages exchanged'
+      rangeSelector:{
+                enabled:true
+              },
+      subtitle: {
+          text: 'Source: whatsapp.com'
+      },
+
+      xAxis: {
+        type: 'datetime',
+        title: {
+          text: 'Days'
+        }
+      },
+      yAxis: {
+        min: 0,
+        //  max: 400,
+        labels: {
+          rotation: 30
+        },
+        title: {
+          text: 'messages exchanged'
+        }
+      },
+      legend: {
+          layout: 'vertical',
+          align: 'right',
+          verticalAlign: 'middle'
+      },
+
+      plotOptions: {
+          series: {
+              label: {
+                  connectorAllowed: false
+              },
+              pointStart: 2010
+          }
+      },
+
+      series: [{
+          name: senders[0],
+          data: cumulativeMessages[senders[0]]
+      }, {
+          name: senders[1],
+          data: cumulativeMessages[senders[1]]
+      }],
+
+      responsive: {
+          rules: [{
+              condition: {
+                  maxWidth: 500
+              },
+              chartOptions: {
+                  legend: {
+                      layout: 'horizontal',
+                      align: 'center',
+                      verticalAlign: 'bottom'
+                  }
+              }
+          }]
       }
 
-    },
-    plotOptions: {
-      series: {
-        stacking: 'normal'
-      }
-    },
-    series: [{
-        name: senders[0],
-        data: cumulativeMessages[senders[0]]
-      },
-      {
-        name: senders[1],
-        data: cumulativeMessages[senders[1]]
-      }
-    ]
   });
 
   //Calculate and display a graph for prime time, i.e hour when most messages were exchanged
@@ -303,14 +327,11 @@ function solutions(chatArr) {
     return [Date.UTC(2017, 9, 1, parseInt(item[0])), item[1]];
   })
 
-  // console.log("Printing final input");
-  // console.log(primeArr);
-
   Highcharts.chart('container2', {
     chart: {
       type: 'column'
     },
-    colors: ['#09F'],
+    colors: ['#00F'],
     title: {
       text: 'Prime Hours'
     },
@@ -367,6 +388,7 @@ function solutions(chatArr) {
       plotShadow: false,
       type: 'pie'
     },
+    colors: ['#F00', '#00F', '#FFA000'],
     title: {
       text: 'Percentage of messages exchanged in the morning vs noon vs night'
     },
