@@ -3,6 +3,10 @@ body {
   background: #ECEFF1;
 }
 
+img {
+  max-width: 100%;
+}
+
 .navbar {
   background: #34AF23;
   border: none;
@@ -15,6 +19,10 @@ body {
 
 .navbar-brand {
   font-family: 'Dancing Script', cursive;
+}
+
+.card-title {
+  color: #aaa;
 }
 
 .card {
@@ -39,5 +47,10 @@ body {
 
 .privacy-notice {
   font-size: 0.75em;
+  opacity: 0.75;
+}
+
+.insight-empty {
+  padding: 24px;
   opacity: 0.75;
 }
