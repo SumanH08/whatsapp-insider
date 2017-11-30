@@ -46,7 +46,6 @@ function solutions(chatArr) {
     }
   })
 
-
   //Images sent by each sender
   var textArray = [];
   var imageObj = {};
@@ -66,8 +65,9 @@ function solutions(chatArr) {
 
   })
 
-  textArray = _.flattenDeep(textArray);
 
+//sorting chat array to calculate most used words
+  textArray = _.flattenDeep(textArray);
   textArray = textArray.map(function(item) {
     item = item.trim();
     return item.toLowerCase();
@@ -77,7 +77,6 @@ function solutions(chatArr) {
   //var result = _.countBy(textArray, _.identity);
   var result = mostUsedWords(textArray);
   console.log(result);
-
   // Object.keys(obj) – returns an array of keys.
   // Object.values(obj) – returns an array of values.
   // Object.entries(obj) – returns an array of [key, value] pairs
@@ -158,6 +157,8 @@ function solutions(chatArr) {
   //
   // console.log("Images by each sender", imageObj);
 
+  //working with high chart graphs below
+
   var EBDayArr = [],
     SumanDayArr = [];
 
@@ -230,10 +231,7 @@ function solutions(chatArr) {
   });
   //---------------------------------------------------------------------------
   //calling countMessagesOverDays function to display graph using Highcharts
-  var cumulativeMessages = countMessagesOverDays(chatArr)
-  console.log("Messages over days");
-  console.log(cumulativeMessages);
-
+  var cumulativeMessages = countMessagesOverDays(chatArr);
   Highcharts.stockChart('container1', {
 
       colors: ['#F00', '#00F'],
@@ -303,6 +301,7 @@ function solutions(chatArr) {
 
   });
 
+  //---------------------------------------------------------------------------
   //Calculate and display a graph for prime time, i.e hour when most messages were exchanged
 
   var prime = primeTime(chatArr);
@@ -370,7 +369,8 @@ function solutions(chatArr) {
       data: primeArr
     }]
   });
-
+  //---------------------------------------------------------------------------
+//graph for messages exchanged in the morning, noon and night
   var percentObj = percentageOfMessages(chatArr);
   var morningPercent = ((percentObj["morningMessages"] / (percentObj["morningMessages"] + percentObj["noonMessages"] + percentObj["nightMessages"] )) * 100).toFixed(2);
 
@@ -430,7 +430,8 @@ function solutions(chatArr) {
   });
 
 }
-
+//---------------------------------------------------------------------------
+//Helper functions below
 function mostUsedWords(textArray) {
   var a = [], b = [], prev;
   var newObj = {};
@@ -439,25 +440,12 @@ function mostUsedWords(textArray) {
   console.log(textArray);
 
   textArray.forEach(function(arr, i) {
-    // var key, value = 0;
-
     newObj[arr] = newObj[arr] ? newObj[arr] + 1 : 1;
-    //
-    // if (arr !== prev) {
-    //   key = arr;
-    //   value = 1;
-    //   newObj[key] = value; //bracket notation since key here is a variable
-    // } else {
-    //   key = prev;
-    //   newObj[key] = newObj[key] + 1;
-    // }
-    // prev = arr;
   })
   return newObj;
 }
 
 //func that calculates the first sender of a message per day
-
 function firstMessage(obj) {
   var prev = "";
   var firsts = [];
@@ -480,12 +468,9 @@ function firstMessage(obj) {
     prev = message.Dates.slice(0, 9);
   })
   return firsts;
-  // console.log("First messages of the day");
-  // console.log(firsts);
 }
 
 //count messages over days
-
 function countMessagesOverDays(obj) {
   var countMessages = {};
   var prev = "";
@@ -522,10 +507,6 @@ function countMessagesOverDays(obj) {
       }
     })
   })
-
-  console.log("MEssages over days");
-  console.log(countMessages);
-
   var EBArr = Object.keys(countMessages).map(function(date, i) {
     var dateSplit = date.split("/");
     return [Date.UTC(dateSplit[2], dateSplit[1] - 1, dateSplit[0]), countMessages[date]["EB"]]
@@ -544,7 +525,6 @@ function countMessagesOverDays(obj) {
 }
 
 //When do we talk the most (by hour)
-
 function primeTime(chatArr) {
   var primeHour = {};
   var hours, am_pm, hotHours;
@@ -564,7 +544,6 @@ function primeTime(chatArr) {
 }
 
 //calculate percentage of messages sent in the morning vs night
-
 function percentageOfMessages(messages){
   var morn = 0, nooning = 0, nighting = 0;
   var format = 'hh:mm:ss A';
@@ -591,10 +570,5 @@ function percentageOfMessages(messages){
       night.push(message);
     }
   })
-  console.log(messageObj);
-  console.log("Morning and evening messages");
-  console.log(morning);
-  console.log(noon);
-  console.log(night);
   return messageObj;
 }

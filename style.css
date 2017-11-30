@@ -18,7 +18,7 @@ body {
   background-color: #34AF23;
   /*vertical-align: middle;*/
 }
-#top-bar li a {
+#top-bar li a{
   display: block;
   color: white;
   text-decoration: none;

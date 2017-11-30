@@ -33,14 +33,14 @@ function parseData(chatData) {
 
     //gives the index of the point where the date ends
     var dateEndIndex = message.indexOf(" ");
-    var in_date = message.slice(0, dateEndIndex-1);
+    var in_date = message.slice(0, dateEndIndex - 1);
     var dateFormat = "DD/MM/YY";
     var checkValidDate = moment(in_date, dateFormat).isValid();
 
     //date regex for DD/MM/YY and DD/MM/YYYY formats
     var dateReg = /^\d{2}[./-]\d{2}[./-]\d{4}$/
     var dateReg2 = /^\d{2}[./-]\d{2}[./-]\d{2}$/
-    //check if the date is a valid string, not null and in a valid format with"/"
+    //check if the date is a valid string, not null and in a valid format with slashes"/"
     if (checkValidDate && (in_date.length >= 6) && (dateReg.test(in_date) || dateReg2.test(in_date))) {
       //the nested moment formats the string into a date string and then the outer moment will format it into the format provided
       var out_date = moment(in_date, "DD/MM/YYYY").format("DD/MM/YYYY")
@@ -69,15 +69,16 @@ function parseData(chatData) {
       var senderIndexValue = formatted_chat.indexOf(": ", dateIndexValue + 3) > 0 ? formatted_chat.indexOf(": ", dateIndexValue + 3) : 0;
 
       //if there is no sender, i.e. missed voice call/missed video call won't have sender recorded, then assign a null string to sender
-      if(senderIndexValue > 0){
+      if (senderIndexValue > 0) {
         chatObj.Sender = formatted_chat.substring(dateIndexValue + 4, senderIndexValue).trim();
         chatObj.Text = formatted_chat.substring(senderIndexValue + 2).trim();
-      }
-      else {
+      } else {
         chatObj.Sender = "";
         chatObj.Text = formatted_chat.substring(dateIndexValue + 3).trim();
       }
     } else {
+
+        //??
       chatObj.Dates = "";
       chatObj.Sender = "";
       chatObj.Text = formatted_chat.trim();
@@ -103,7 +104,7 @@ function parseData(chatData) {
   console.log("After parsing below");
   console.log(chatArr);
 
-  //delete all the missed voice calls from the chatArr and put them in a different array
+  //delete all the missed voice calls from the chatArr
 
   chatArr = chatArr.filter(function(message, i) {
     if (message.Text.indexOf("Missed Voice Call") >= 0 || message.Text.indexOf("Missed Video Call") >= 0) {
@@ -130,7 +131,7 @@ function parseData(chatData) {
   console.log("Senders now");
   console.log(_.uniq(senders));
 
-    $('#sender-info').html(`<p><b>${senders[0]} & ${senders[1]}</b><br>Timeline</p>`)
+  $('#sender-info').html(`<p><b>${senders[0]} & ${senders[1]}</b><br>Timeline</p>`)
 
   solutions(chatArr);
 }
