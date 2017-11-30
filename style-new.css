@@ -1,0 +1,13 @@
+.navbar {
+  background: #34AF23;
+  border: none;
+  border-radius: 0;
+}
+
+.navbar a {
+  color: #FFF !important;
+}
+
+.navbar-brand {
+  font-family: 'Dancing Script', cursive;
+}
