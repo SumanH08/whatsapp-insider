@@ -1,5 +1,3 @@
-var senders = [];
-
 window.onload = function() {
   var fileInput = document.getElementById('fileInput');
 
@@ -9,7 +7,6 @@ window.onload = function() {
 
     if (file.type.match(textType)) {
       var reader = new FileReader();
-
       reader.onload = function(e) {
         parseData(reader.result);
       }
@@ -21,69 +18,34 @@ window.onload = function() {
 }
 
 function parseData(chatData) {
-
   var splitMessage = chatData.split("\n");
-  var prev_message = "";
 
-  // determine whats the date format in the file
-  var firstMessage = splitMessage[0];
-  var dateString = firstMessage.split(",")[0];
+  // go through each message and convert to {dateTime: , sender: , message: }
+  var chatArr = [];
+  splitMessage.forEach(function(messageStr, index) {
+    var chatObj = { dt: null, sender: null, msg: "" };
 
-  var dateFormat = "DD/MM/YYYY", dateTimeEndIndex = 0;
-
-  var dateReg1 = /^\d{2}[./-]\d{2}[./-]\d{4}$/  // DD-MM-YYYY
-  var dateReg2 = /^\d{2}[./-]\d{2}[./-]\d{2}$/  // DD-MM-YY
-
-  if(dateReg1.test(dateString)) {
-    dateFormat = "DD/MM/YYYY"
-  } else if (dateReg2.test(dateString)) {
-    dateFormat = "DD/MM/YY"
-  }
-
-  if(dateString.indexOf("-") > 0) {
-    dateFormat.replace(/\//g, "-")
-  }
-
-  var dateLen = dateString.length;
-
-  // go through each message
-  // convert to {dateTime: , sender: , message: }
-  var chatArr = splitMessage.map(function(messageStr, i) {
-    var chatObj = {
-      dateTime: null,
-      sender: null,
-      message: ""
-    };
-
-    // fill dateTime
-    var dateEndIndex = messageStr.indexOf(" ");
-    // check if indexOf dateLength + 12 or 13 is a colon
-    if(messageStr[dateLen + 12] == ":") {
-      dateEndIndex = dateLen + 12;
-    } else if (messageStr[dateLen + 13] == ":") {
-      dateEndIndex = dateLen + 13;
+    // generic data regex and extract
+    var regex = /^([0-9]{1,2})[/|-]([0-9]{1,2})[/|-]([0-9]{2,4}), ([0-9]{1,2}):([0-9]{1,2}):([0-9]{1,2}) (AM|am|PM|pm): ([^:]*): (.*)/
+    var matches = messageStr.match(regex);
+    if(matches) {
+        var date    = matches[1].length == 2 ? matches[1] : "0"+matches[1];
+        var month   = matches[2].length == 2 ? matches[2] : "0"+matches[2];
+        var year    = matches[3].length == 2 ? matches[3] : "20"+matches[3];
+        var hour    = matches[4].length == 2 ? matches[4] : "0"+matches[4];
+        var min     = matches[5].length == 2 ? matches[5] : "0"+matches[5];
+        var sec     = matches[6].length == 2 ? matches[6] : "0"+matches[6];
+        var ampm    = matches[7].toLowerCase();
+        chatObj.dt = date+"/"+month+"/"+year+" "+hour+":"+min+":"+sec+" "+ampm;
+        chatObj.sender = matches[8];
+        chatObj.msg = matches[9].trim();
+        chatArr.push(chatObj);
     } else {
-      return {
-        dateTime: null,
-        sender: null,
-        message: messageStr.trim()
-      }
+        if(chatArr.length > 0)
+          chatArr[chatArr.length - 1].msg = chatArr[chatArr.length - 1].msg + " " + messageStr.trim();
     }
-
-    chatObj.dateTime = messageStr.substring(0, dateEndIndex).toLowerCase();
-
-    // fill sender & message
-    var senderIndex = messageStr.indexOf(": ", dateEndIndex+2) > 0 ? messageStr.indexOf(": ", dateEndIndex+2) : 0;
-
-    //if there is no sender, i.e. missed voice call/missed video call won't have sender recorded, then assign a null string to sender
-    if (senderIndex > 0) {
-      chatObj.sender = messageStr.substring(dateEndIndex+2, senderIndex).trim();
-      chatObj.message = messageStr.substring(senderIndex+2).trim();
-    } else {
-      chatObj.sender = null;
-      chatObj.message = messageStr.substring(dateEndIndex).trim();
-    }
-    
-    return chatObj;
   });
+
+  var senderCountRes = senderCount(chatArr);
+  console.log(senderCountRes);
 }
