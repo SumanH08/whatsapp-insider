@@ -5,6 +5,7 @@ var getEmojiRegex = function() {
 var senderCount = function(chatArr) {
   var messageCount = {}, imageCount = {}, wordCount = {}, emojiCount = {}, wordsObj = {}, emojiObj = {}, latency = {};
   var imageRegex = /<‎image omitted>/g;
+  var mediaRegex = /<Media omitted>/g;
   var emojiRegex = getEmojiRegex();
 
   var prevSender = chatArr[0].sender;
@@ -12,7 +13,7 @@ var senderCount = function(chatArr) {
 
   chatArr.forEach(function(chatObj) {
     // images
-    var imageMatches = chatObj.msg.match(imageRegex);
+    var imageMatches = chatObj.msg.match(imageRegex) || chatObj.msg.match(mediaRegex);
     if(imageMatches) {
       imageCount[chatObj.sender] = imageCount[chatObj.sender] ? imageCount[chatObj.sender] + 1 : 1;
     }
@@ -85,4 +86,91 @@ var senderCount = function(chatArr) {
     topEmoji: emojiArr,
     latency: latency
   };
+}
+
+var colors = ['rgba(244, 67, 54, 0.5)', 'rgba(48, 79, 254, 0.5)'];
+
+var firstMessengerData = function(chatArr) {
+  var currentDate = null, graphObj = {};
+  chatArr.forEach(function(chatObj) {
+    var nowDate = moment(chatObj.dt, "DD/MM/YYYY hh:mm:ss a");
+
+    if(nowDate.hour() > 6) {
+      nowDate = nowDate.format("DD/MM/YYYY");
+
+      if(nowDate != currentDate) {
+        graphObj[chatObj.sender] = graphObj[chatObj.sender] || [];
+        graphObj[chatObj.sender].push(moment(nowDate, "DD/MM/YYYY").valueOf());
+        currentDate = nowDate;
+      }
+    }
+  });
+
+  return Object.keys(graphObj).map(function(key, index) {
+    return {
+      name: key,
+      color: colors[index],
+      data: graphObj[key].map(function(date) {
+        return [date, 0]
+      })
+    }
+  })
+}
+
+var messagesOverDaysData = function(chatArr) {
+  var graphObj = {};
+  chatArr.forEach(function(chatObj) {
+    var nowDate = moment(chatObj.dt, "DD/MM/YYYY hh:mm:ss a").startOf('day').valueOf();
+    graphObj[chatObj.sender] = graphObj[chatObj.sender] || {};
+    graphObj[chatObj.sender][nowDate] = graphObj[chatObj.sender][nowDate] || 0;
+    graphObj[chatObj.sender][nowDate] = graphObj[chatObj.sender][nowDate] + 1;
+  })
+
+  return Object.keys(graphObj).map(function(key, index) {
+    var dateArr = Object.keys(graphObj[key]).map(function(date) {
+      return [parseInt(date), graphObj[key][date]]
+    });
+
+    dateArr = dateArr.sort(function(a, b) {
+      return a[0] - b[0]
+    })
+
+    return {
+      name: key,
+      color: colors[index],
+      data: dateArr
+    }
+  })
+}
+
+var primeHoursData = function(chatArr) {
+  xCat = Array.apply(null, Array(24)).map(function (_, i) {return i;});
+  yCat = Array.apply(null, Array(7)).map(function (_, i) {return i;});
+
+  var array2D = [];
+
+  xCat.forEach(function() {
+    var arr = [];
+    yCat.forEach(function() {
+      arr.push(0);
+    })
+    array2D.push(arr);
+  })
+
+  chatArr.forEach(function(chatObj) {
+    var nowDate = moment(chatObj.dt, "DD/MM/YYYY hh:mm:ss a");
+    var hour = nowDate.hour();
+    var day = nowDate.day();
+    array2D[hour][day] += 1;
+  })
+
+  var returnArr = [];
+
+  for (var i = 0; i < array2D.length; i++) {
+    for (var j = 0; j < array2D[0].length; j++) {
+       returnArr.push([i, j, array2D[i][j]]);
+    }
+  }
+
+  return returnArr;
 }

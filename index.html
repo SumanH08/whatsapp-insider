@@ -5,20 +5,16 @@
   <title>Whatsapp insider</title>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Dancing+Script">
   <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
-  <link rel="stylesheet" href="style-new.css">
-  <!-- <link rel="stylesheet" href="style.css"> -->
-
+  <link rel="stylesheet" href="style.css">
 
   <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
-  <script src="lodash.js"></script>
   <script src="moment.js"></script>
 
   <script src="https://code.highcharts.com/stock/highstock.js"></script>
-  <script src="https://code.highcharts.com/stock/highcharts-more.js"></script>
-  <script src="https://code.highcharts.com/stock/modules/exporting.js"></script>
+  <script src="https://code.highcharts.com/modules/heatmap.js"></script>
 
-  <script src="helper-functions-new.js"></script>
-  <script src="script-new.js"></script>
+  <script src="helper-functions.js"></script>
+  <script src="script.js"></script>
 </head>
 
 <body>
@@ -70,7 +66,7 @@
   <div class="container">
     <h3 class="card-title">Insights</h3>
     <div class="card">
-      <div class="card-section">
+      <div class="card-section" id="insights">
         <div class="insight-empty text-center">
           Insights shown here
         </div>
@@ -107,18 +103,6 @@
     <div class="card">
       <div class="card-section">
         <div id="graph-prime-hours">
-          <img src="img/first-messenger.png"/>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- TODO: update image -->
-  <div class="container">
-    <h3 class="card-title">Texts exchanged in the morning, noon and night</h3>
-    <div class="card">
-      <div class="card-section">
-        <div id="graph-texts-morn-noon-night">
           <img src="img/first-messenger.png"/>
         </div>
       </div>

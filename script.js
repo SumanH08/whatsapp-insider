@@ -1,23 +1,20 @@
-var senders = [];
-
 window.onload = function() {
   var fileInput = document.getElementById('fileInput');
-  var fileDisplayArea = document.getElementById('fileDisplayArea');
 
   fileInput.addEventListener('change', function(e) {
+    document.getElementById('sender-info').innerHTML = '<h5 class="animated">Loading...</h5>';
     var file = fileInput.files[0];
     var textType = /text.*/;
 
     if (file.type.match(textType)) {
       var reader = new FileReader();
-
       reader.onload = function(e) {
-        //fileDisplayArea.innerText = reader.result;
         parseData(reader.result);
       }
       reader.readAsText(file);
     } else {
-      fileDisplayArea.innerText = "File not supported!"
+      document.getElementById('sender-info').innerHTML = '';
+      alert("File type not supported.")
     }
   });
 }
@@ -25,113 +22,182 @@ window.onload = function() {
 function parseData(chatData) {
 
   var splitMessage = chatData.split("\n");
-  var prev_message = "";
 
-  var chatArr = splitMessage.map(function(message, i) {
-    var chatObj = {};
-    var dateIndexValue = 0;
+  // go through each message and convert to {dateTime: , sender: , message: }
+  var chatArr = [];
+  splitMessage.forEach(function(messageStr, index) {
+    var chatObj = { dt: null, sender: null, msg: "" };
 
-    //gives the index of the point where the date ends
-    var dateEndIndex = message.indexOf(" ");
-    var in_date = message.slice(0, dateEndIndex - 1);
-    var dateFormat = "DD/MM/YY";
-    var checkValidDate = moment(in_date, dateFormat).isValid();
+    // generic data regex and extract
+    var regexiOS = /^([0-9]{1,2})[/|-]([0-9]{1,2})[/|-]([0-9]{2,4}), ([0-9]{1,2}):([0-9]{1,2}):([0-9]{1,2}) (AM|am|PM|pm): ([^:]*): (.*)/
+    var regexAndroid = /^([0-9]{1,2})[/|-]([0-9]{1,2})[/|-]([0-9]{2,4}), ([0-9]{1,2}):([0-9]{1,2}) (AM|am|PM|pm) - ([^:]*): (.*)/
+    var matchiOS = messageStr.match(regexiOS);
+    var matchAndroid = messageStr.match(regexAndroid);
 
-    //date regex for DD/MM/YY and DD/MM/YYYY formats
-    var dateReg = /^\d{2}[./-]\d{2}[./-]\d{4}$/
-    var dateReg2 = /^\d{2}[./-]\d{2}[./-]\d{2}$/
-    //check if the date is a valid string, not null and in a valid format with slashes"/"
-    if (checkValidDate && (in_date.length >= 6) && (dateReg.test(in_date) || dateReg2.test(in_date))) {
-      //the nested moment formats the string into a date string and then the outer moment will format it into the format provided
-      var out_date = moment(in_date, "DD/MM/YYYY").format("DD/MM/YYYY")
-      //This solutions works too
-      // var out_date = moment(moment(in_date, "DD/MM/YY")).format('DD/MM/YYYY');
-
-      var formatted_chat = message.replace(message.slice(0, dateEndIndex - 1), out_date);
+    if(matchiOS) {
+      var date    = matchiOS[1].length == 2 ? matchiOS[1] : "0"+matchiOS[1];
+      var month   = matchiOS[2].length == 2 ? matchiOS[2] : "0"+matchiOS[2];
+      var year    = matchiOS[3].length == 2 ? matchiOS[3] : "20"+matchiOS[3];
+      var hour    = matchiOS[4].length == 2 ? matchiOS[4] : "0"+matchiOS[4];
+      var min     = matchiOS[5].length == 2 ? matchiOS[5] : "0"+matchiOS[5];
+      var sec     = matchiOS[6].length == 2 ? matchiOS[6] : "0"+matchiOS[6];
+      var ampm    = matchiOS[7].toLowerCase();
+      chatObj.dt = date+"/"+month+"/"+year+" "+hour+":"+min+":"+sec+" "+ampm;
+      chatObj.sender = matchiOS[8];
+      chatObj.msg = matchiOS[9].trim();
+      chatArr.push(chatObj);
+    } else if (matchAndroid) {
+      var month   = matchAndroid[1].length == 2 ? matchAndroid[1] : "0"+matchAndroid[1];
+      var date    = matchAndroid[2].length == 2 ? matchAndroid[2] : "0"+matchAndroid[2];
+      var year    = matchAndroid[3].length == 2 ? matchAndroid[3] : "20"+matchAndroid[3];
+      var hour    = matchAndroid[4].length == 2 ? matchAndroid[4] : "0"+matchAndroid[4];
+      var min     = matchAndroid[5].length == 2 ? matchAndroid[5] : "0"+matchAndroid[5];
+      var ampm    = matchAndroid[6].toLowerCase();
+      chatObj.dt = date+"/"+month+"/"+year+" "+hour+":"+min+":00"+" "+ampm;
+      chatObj.sender = matchAndroid[7];
+      chatObj.msg = matchAndroid[8].trim();
+      chatArr.push(chatObj);
     } else {
-      var formatted_chat = message;
+        if(chatArr.length > 0)
+          chatArr[chatArr.length - 1].msg = chatArr[chatArr.length - 1].msg + " " + messageStr.trim();
     }
-    var year = formatted_chat.slice(6, 10);
-    year = parseInt(year) || 0;
+  });
 
-    //check if valid date is present
-    //year should be valid between index 6 and 10
-    if (year > 2000) {
-      //assigning appropriate strings to date, sender and text keys in the chatObj
-      if (/am: /.test(formatted_chat) || /AM: /.test(formatted_chat)) {
-        dateIndexValue = formatted_chat.indexOf("am: ") > 0 ? formatted_chat.indexOf("am: ") : formatted_chat.indexOf("AM: ");
-      } else {
-        dateIndexValue = formatted_chat.indexOf("pm: ") > 0 ? formatted_chat.indexOf("pm: ") : formatted_chat.indexOf("PM: ");
-      }
+  var senderCountRes = senderCount(chatArr);
 
-      chatObj.Dates = formatted_chat.substring(0, dateIndexValue + 2);
+  var senders = Object.keys(senderCountRes.messageCount);
 
-      var senderIndexValue = formatted_chat.indexOf(": ", dateIndexValue + 3) > 0 ? formatted_chat.indexOf(": ", dateIndexValue + 3) : 0;
+  var messageCount = senderCountRes.messageCount;
+  messageCount = Object.keys(messageCount).map(function(key) {
+    return [key, messageCount[key]]
+  }).sort(function(a, b) { return b[1] - a[1] })
 
-      //if there is no sender, i.e. missed voice call/missed video call won't have sender recorded, then assign a null string to sender
-      if (senderIndexValue > 0) {
-        chatObj.Sender = formatted_chat.substring(dateIndexValue + 4, senderIndexValue).trim();
-        chatObj.Text = formatted_chat.substring(senderIndexValue + 2).trim();
-      } else {
-        chatObj.Sender = "";
-        chatObj.Text = formatted_chat.substring(dateIndexValue + 3).trim();
-      }
-    } else {
+  var imageCount = senderCountRes.imageCount;
+  imageCount = Object.keys(imageCount).map(function(key) {
+    return [key, imageCount[key]]
+  }).sort(function(a, b) { return b[1] - a[1] })
 
-        //??
-      chatObj.Dates = "";
-      chatObj.Sender = "";
-      chatObj.Text = formatted_chat.trim();
-    }
-    return chatObj;
-  })
+  var emojiCount = senderCountRes.emojiCount;
+  emojiCount = Object.keys(emojiCount).map(function(key) {
+    return [key, emojiCount[key]]
+  }).sort(function(a, b) { return b[1] - a[1] })
 
+  var wordCount = senderCountRes.wordCount;
+  wordCount = Object.keys(wordCount).map(function(key) {
+    return [key, wordCount[key]]
+  }).sort(function(a, b) { return b[1] - a[1] })
 
-  console.log("First Look below");
-  console.log(chatArr);
+  var latency = senderCountRes.latency;
+  latency = Object.keys(latency).map(function(key) {
+    return [key, latency[key]]
+  }).sort(function(a, b) { return b[1] - a[1] })
 
-  //find the current obj with null date and sender, append the object's text to previous valid obj and delete the current obj
-  var prevObj = {};
-  chatArr = chatArr.filter(function(message, i) {
-    if (message.Dates == "" || message.Sender == "") {
-      prevObj.Text = prevObj.Text.concat(message.Text);
-      return false;
-    } else {
-      prevObj = message;
-      return message;
-    }
-  })
-  console.log("After parsing below");
-  console.log(chatArr);
+  var topWords = senderCountRes.topWords.map(function(word) {
+    return word[0]+" ("+word[1]+")"
+  }).join(", ");
 
-  //delete all the missed voice calls from the chatArr
+  var topEmoji = senderCountRes.topEmoji.map(function(emoji) {
+    return emoji[0]+" ("+emoji[1]+")"
+  }).join(", ");
 
-  chatArr = chatArr.filter(function(message, i) {
-    if (message.Text.indexOf("Missed Voice Call") >= 0 || message.Text.indexOf("Missed Video Call") >= 0) {
-      return false;
-    } else {
-      return true;
-    }
-  })
-  console.log("Printing messages after filtering extras");
-  console.log(chatArr);
+  $('#insights').html(`
+    <div>
+      <p>Who sent the most texts? <b>${messageCount[0][0]} (${messageCount[0][1]}) / ${messageCount[1][0]} (${messageCount[1][1]})</b></p>
+      <p>Who sent the most photos? <b>${imageCount[0][0]} (${imageCount[0][1]}) / ${imageCount[1][0]} (${imageCount[1][1]})</b></p>
+      <p>Who sent the most emojis? <b>${emojiCount[0][0]} (${emojiCount[0][1]}) / ${emojiCount[1][0]} (${emojiCount[1][1]})</b></p>
+      <p>Who sent the most words? <b>${wordCount[0][0]} (${wordCount[0][1]}) / ${wordCount[1][0]} (${wordCount[1][1]})</b></p>
+      <p>Who replies late? <b>${latency[0][0]} (${(latency[0][1]/60).toFixed(1)}min) / ${latency[1][0]} (${(latency[1][1]/60).toFixed(1)}min)</b></p>
+      --
+      <p>Top words: <b>${topWords}</b></p>
+      <p>Top emojis: <b>${topEmoji}</b></p>
+    </div>
+    `);
 
-  //get the sender names
-  // var senders = _.(chatArr).map(_.keys).flatten().unique().value();
-  // console.log("These are my senders:")
-  // console.log(senders);
-  var prev = "";
-  chatArr.forEach(function(message, i) {
-    if (message.Sender.indexOf(prev) < 0 || prev == "") {
-      senders.push(message.Sender);
-    }
-    prev = message.Sender;
-  })
+  drawFirstMessengerGraph(firstMessengerData(chatArr));
+  drawMessagesOverDays(messagesOverDaysData(chatArr));
+  drawPrimeHours(primeHoursData(chatArr));
 
-  console.log("Senders now");
-  console.log(_.uniq(senders));
+  $('#sender-info').html(`<h1>${senders[0]}&nbsp;&&nbsp;${senders[1]}</h1>`);
+  $('.card-title').toggleClass("card-title-black");
+}
 
-  $('#sender-info').html(`<p><b>${senders[0]} & ${senders[1]}</b><br>Timeline</p>`)
+function drawFirstMessengerGraph(seriesData) {
+  Highcharts.chart('graph-first-messenger', {
+    chart: { type: 'scatter', zoomType: 'xy', height: 120 },
+    title: { text: null },
+    subtitle: { text: null },
+    legend: { enabled: false },
+    credits: { enabled: false },
+    exporting: { enabled: false },
+    xAxis: { type: 'datetime', title: { enabled: false }, },
+    yAxis: { title: { text: 'Person to text first (after 6am)' } },
+    plotOptions: {
+        scatter: {
+            marker: {
+                radius: 5,
+                states: {
+                    hover: {
+                        enabled: true,
+                        lineColor: 'rgb(100,100,100)'
+                    }
+                }
+            },
+            states: { hover: { marker: { enabled: false } } }
+        }
+    },
+    series: seriesData
+  });
+}
 
-  solutions(chatArr);
+function drawMessagesOverDays(seriesData) {
+  Highcharts.chart('graph-messages-over-days', {
+    chart: { type: 'area', zoomType: 'x' },
+    title: { text: null },
+    subtitle: { text: null },
+    legend: { enabled: false },
+    credits: { enabled: false },
+    exporting: { enabled: false },
+    xAxis: { type: 'datetime', title: { enabled: false }, },
+    yAxis: { title: { text: 'Text count' } },
+    tooltip: { split: true },
+    plotOptions: {
+        area: {
+            stacking: 'normal',
+            lineColor: 'rgba(0, 0, 0, 0.3)',
+            lineWidth: 0,
+            marker: { enabled: false }
+        }
+    },
+    series: seriesData
+  });
+}
+
+function drawPrimeHours(seriesData) {
+  Highcharts.chart('graph-prime-hours', {
+    chart: { type: 'heatmap' },
+    title: { text: null },
+    subtitle: { text: null },
+    legend: { enabled: false },
+    credits: { enabled: false },
+    exporting: { enabled: false },
+    xAxis: {
+        categories: ['Midnight', '1AM', '2AM', '3AM', '4AM', '5AM', '6AM', '7AM', '8AM', '9AM', '10AM', '11AM', 'Noon', '1PM', '2PM', '3PM', '4PM', '5PM', '6PM', '7PM', '8PM', '9PM', '10PM', '11PM']
+    },
+    yAxis: {
+        categories: ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
+    },
+    colorAxis: { min: 0, minColor: '#FFFFFF', maxColor: '#673AB7' },
+    tooltip: {
+        formatter: function () {
+            return '<b>' + this.series.xAxis.categories[this.point.x] + '</b><br><b>' +
+                this.point.value + '</b> texts exchanged <br><b>' + this.series.yAxis.categories[this.point.y] + '</b>';
+        }
+    },
+    series: [{
+        name: 'Sales per employee',
+        borderWidth: 0,
+        data: seriesData,
+        dataLabels: { enabled: true, color: '#000000'}
+    }]
+  });
 }
