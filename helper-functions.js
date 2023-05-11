@@ -4,22 +4,23 @@ var getEmojiRegex = function() {
 
 var senderCount = function(chatArr) {
   var messageCount = {}, imageCount = {}, wordCount = {}, emojiCount = {}, wordsObj = {}, emojiObj = {}, latency = {};
-  var imageRegex = /<‎image omitted>/g;
+  var imageRegex = /image omitted/g;
   var mediaRegex = /<Media omitted>/g;
   var emojiRegex = getEmojiRegex();
 
   var prevSender = chatArr[0].sender;
-  var prevTime = moment(chatArr[0].dt, "DD/MM/YYYY hh:mm:ss a");
+  var prevTime = moment(chatArr[0].dateTime, "DD/MM/YYYY hh:mm:ss a");
 
   chatArr.forEach(function(chatObj) {
     // images
-    var imageMatches = chatObj.msg.match(imageRegex) || chatObj.msg.match(mediaRegex);
+    if(!chatObj) return
+    var imageMatches = chatObj.message.match(imageRegex) || chatObj.message.match(mediaRegex);
     if(imageMatches) {
       imageCount[chatObj.sender] = imageCount[chatObj.sender] ? imageCount[chatObj.sender] + 1 : 1;
     }
 
     // emoji
-    var emojiMatches = chatObj.msg.match(emojiRegex);
+    var emojiMatches = chatObj.message.match(emojiRegex);
     if(emojiMatches) {
       emojiCount[chatObj.sender] = emojiCount[chatObj.sender] ? emojiCount[chatObj.sender] + emojiMatches.length : emojiMatches.length;
       emojiMatches.forEach(function(emoji) {
@@ -31,10 +32,11 @@ var senderCount = function(chatArr) {
     messageCount[chatObj.sender] = messageCount[chatObj.sender] ? messageCount[chatObj.sender] + 1 : 1;
 
     // individual words
-    var words = chatObj.msg.toLowerCase().split(/\s+/);
+    var words = chatObj.message.replace(/image omitted/g, '').toLowerCase().match(/[a-zA-Z'"]+/g) || [];
     words.forEach(function(word) {
       wordsObj[word] = wordsObj[word] ? wordsObj[word] + 1: 1;
-    })
+    });
+
 
     // words
     var wordLength = words.length;
@@ -42,28 +44,28 @@ var senderCount = function(chatArr) {
 
     // time latency
     if(chatObj.sender != prevSender) {
-      var currentTime = moment(chatObj.dt, "DD/MM/YYYY hh:mm:ss a");
+      var currentTime = moment(chatObj.dateTime, "DD/MM/YYYY hh:mm:ss a");
       var timeDiff = currentTime.diff(prevTime, 'seconds');
 
-      if(timeDiff < 3 * 60 * 60) {
+      if(timeDiff < 12 * 60 * 60) {
         if(latency[chatObj.sender] != undefined) {
           latency[chatObj.sender].push(timeDiff);
         } else {
           latency[chatObj.sender] = [timeDiff];
         }
       }
-
       prevSender = chatObj.sender;
       prevTime = currentTime;
     }
   })
 
-  // convert obj to array
+  // convert obj to array, sort by desc, splice to only form an array of first 10 words
   var wordsArr = Object.keys(wordsObj).map(function(key) {
     return [key, wordsObj[key]]
   }).sort(function(a, b) {
     return b[1] - a[1]
   }).splice(0, 10);
+
 
   var emojiArr = Object.keys(emojiObj).map(function(key) {
     return [key, emojiObj[key]]
@@ -93,7 +95,8 @@ var colors = ['rgba(244, 67, 54, 0.5)', 'rgba(48, 79, 254, 0.5)'];
 var firstMessengerData = function(chatArr) {
   var currentDate = null, graphObj = {};
   chatArr.forEach(function(chatObj) {
-    var nowDate = moment(chatObj.dt, "DD/MM/YYYY hh:mm:ss a");
+    if(!chatObj) return
+    var nowDate = moment(chatObj.dateTime, "DD/MM/YYYY hh:mm:ss a");
 
     if(nowDate.hour() > 6) {
       nowDate = nowDate.format("DD/MM/YYYY");
@@ -105,6 +108,7 @@ var firstMessengerData = function(chatArr) {
       }
     }
   });
+
 
   return Object.keys(graphObj).map(function(key, index) {
     return {
@@ -120,7 +124,8 @@ var firstMessengerData = function(chatArr) {
 var messagesOverDaysData = function(chatArr) {
   var graphObj = {};
   chatArr.forEach(function(chatObj) {
-    var nowDate = moment(chatObj.dt, "DD/MM/YYYY hh:mm:ss a").startOf('day').valueOf();
+    if(!chatObj) return
+    var nowDate = moment(chatObj.dateTime, "DD/MM/YYYY hh:mm:ss a").startOf('day').valueOf();
     graphObj[chatObj.sender] = graphObj[chatObj.sender] || {};
     graphObj[chatObj.sender][nowDate] = graphObj[chatObj.sender][nowDate] || 0;
     graphObj[chatObj.sender][nowDate] = graphObj[chatObj.sender][nowDate] + 1;
@@ -158,7 +163,8 @@ var primeHoursData = function(chatArr) {
   })
 
   chatArr.forEach(function(chatObj) {
-    var nowDate = moment(chatObj.dt, "DD/MM/YYYY hh:mm:ss a");
+    if(!chatObj) return
+    var nowDate = moment(chatObj.dateTime, "DD/MM/YYYY hh:mm:ss a");
     var hour = nowDate.hour();
     var day = nowDate.day();
     array2D[hour][day] += 1;

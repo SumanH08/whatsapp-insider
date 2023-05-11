@@ -19,49 +19,34 @@ window.onload = function() {
   });
 }
 
-function parseData(chatData) {
+function parseWhatsAppChat(chat) {
+  const regex = /\[(\d{1,2}\/\d{1,2}\/\d{1,2}), (\d{1,2}:\d{1,2}:\d{1,2} [AP]M)\] ([^:]+): (.+)/g;
+  const messages = [];
+  let match;
+  while ((match = regex.exec(chat)) !== null) {
+    const [_, date, time, sender, message] = match;
+    messages.push({
+      dateTime: date + " " + time,
+      date,
+      time,
+      sender,
+      message,
+    });
+  }
+  return messages;
+}
 
+
+function parseData(chatData) {
   var splitMessage = chatData.split("\n");
 
   // go through each message and convert to {dateTime: , sender: , message: }
   var chatArr = [];
   splitMessage.forEach(function(messageStr, index) {
-    var chatObj = { dt: null, sender: null, msg: "" };
-
-    // generic data regex and extract
-    var regexiOS = /^([0-9]{1,2})[/|-]([0-9]{1,2})[/|-]([0-9]{2,4}), ([0-9]{1,2}):([0-9]{1,2}):([0-9]{1,2}) (AM|am|PM|pm): ([^:]*): (.*)/
-    var regexAndroid = /^([0-9]{1,2})[/|-]([0-9]{1,2})[/|-]([0-9]{2,4}), ([0-9]{1,2}):([0-9]{1,2}) (AM|am|PM|pm) - ([^:]*): (.*)/
-    var matchiOS = messageStr.match(regexiOS);
-    var matchAndroid = messageStr.match(regexAndroid);
-
-    if(matchiOS) {
-      var date    = matchiOS[1].length == 2 ? matchiOS[1] : "0"+matchiOS[1];
-      var month   = matchiOS[2].length == 2 ? matchiOS[2] : "0"+matchiOS[2];
-      var year    = matchiOS[3].length == 2 ? matchiOS[3] : "20"+matchiOS[3];
-      var hour    = matchiOS[4].length == 2 ? matchiOS[4] : "0"+matchiOS[4];
-      var min     = matchiOS[5].length == 2 ? matchiOS[5] : "0"+matchiOS[5];
-      var sec     = matchiOS[6].length == 2 ? matchiOS[6] : "0"+matchiOS[6];
-      var ampm    = matchiOS[7].toLowerCase();
-      chatObj.dt = date+"/"+month+"/"+year+" "+hour+":"+min+":"+sec+" "+ampm;
-      chatObj.sender = matchiOS[8];
-      chatObj.msg = matchiOS[9].trim();
-      chatArr.push(chatObj);
-    } else if (matchAndroid) {
-      var month   = matchAndroid[1].length == 2 ? matchAndroid[1] : "0"+matchAndroid[1];
-      var date    = matchAndroid[2].length == 2 ? matchAndroid[2] : "0"+matchAndroid[2];
-      var year    = matchAndroid[3].length == 2 ? matchAndroid[3] : "20"+matchAndroid[3];
-      var hour    = matchAndroid[4].length == 2 ? matchAndroid[4] : "0"+matchAndroid[4];
-      var min     = matchAndroid[5].length == 2 ? matchAndroid[5] : "0"+matchAndroid[5];
-      var ampm    = matchAndroid[6].toLowerCase();
-      chatObj.dt = date+"/"+month+"/"+year+" "+hour+":"+min+":00"+" "+ampm;
-      chatObj.sender = matchAndroid[7];
-      chatObj.msg = matchAndroid[8].trim();
-      chatArr.push(chatObj);
-    } else {
-        if(chatArr.length > 0)
-          chatArr[chatArr.length - 1].msg = chatArr[chatArr.length - 1].msg + " " + messageStr.trim();
-    }
+    var obj = parseWhatsAppChat(messageStr)
+    chatArr.push(obj[0]);
   });
+
 
   var senderCountRes = senderCount(chatArr);
 
@@ -100,18 +85,35 @@ function parseData(chatData) {
     return emoji[0]+" ("+emoji[1]+")"
   }).join(", ");
 
+  var [sender1="", count1=0] = messageCount[0]
+  var [sender2="", count2=0] = messageCount[1]
+
+  var [imageSender1="", imageCount1=0] = imageCount[0]
+  var [imageSender2="", imageCount2=0] = imageCount[1]
+
+  var [emojiSender1="", emojiCount1=0] = emojiCount[0]
+  var [emojiSender2="", emojiCount2=0] = emojiCount[1]
+
+  var [wordSender1="", wordCount1=0] = wordCount[0]
+  var [wordSender2="", wordCount2=0] = wordCount[1]
+
+  var [latency1="", latencyCount1=0] = latency[0]
+  var [latency2="", latencyCount2=0] = latency[1]
+
   $('#insights').html(`
     <div>
-      <p>Who sent the most texts? <b>${messageCount[0][0]} (${messageCount[0][1]}) / ${messageCount[1][0]} (${messageCount[1][1]})</b></p>
-      <p>Who sent the most photos? <b>${imageCount[0][0]} (${imageCount[0][1]}) / ${imageCount[1][0]} (${imageCount[1][1]})</b></p>
-      <p>Who sent the most emojis? <b>${emojiCount[0][0]} (${emojiCount[0][1]}) / ${emojiCount[1][0]} (${emojiCount[1][1]})</b></p>
-      <p>Who sent the most words? <b>${wordCount[0][0]} (${wordCount[0][1]}) / ${wordCount[1][0]} (${wordCount[1][1]})</b></p>
-      <p>Who replies late? <b>${latency[0][0]} (${(latency[0][1]/60).toFixed(1)}min) / ${latency[1][0]} (${(latency[1][1]/60).toFixed(1)}min)</b></p>
+      <p>Who sent the most texts? <b>${sender1} (${count1}) / ${sender2} (${count2})</b></p>
+      <p>Who sent the most photos? <b>${imageSender1} (${imageCount1}) / ${imageSender2} (${imageCount2})</b></p>
+      <p>Who sent the most emojis? <b>${emojiSender1} (${emojiCount1}) / ${emojiSender2} (${emojiCount2})</b></p>
+      <p>Who sent the most words? <b>${wordSender1} (${wordCount1}) / ${wordSender2} (${wordCount2})</b></p>
+      <p>Who replies late? <b>${latency1} (${(latencyCount1/60).toFixed(1)}min)/${latency2} (${(latencyCount2/60).toFixed(1)}min) </b></p>
       --
       <p>Top words: <b>${topWords}</b></p>
       <p>Top emojis: <b>${topEmoji}</b></p>
     </div>
     `);
+
+
 
   drawFirstMessengerGraph(firstMessengerData(chatArr));
   drawMessagesOverDays(messagesOverDaysData(chatArr));
@@ -122,30 +124,62 @@ function parseData(chatData) {
 }
 
 function drawFirstMessengerGraph(seriesData) {
-  Highcharts.chart('graph-first-messenger', {
-    chart: { type: 'scatter', zoomType: 'xy', height: 120 },
+  Highcharts.chart("graph-first-messenger", {
+    chart: { type: "scatter", zoomType: "xy", height: 224 },
     title: { text: null },
     subtitle: { text: null },
-    legend: { enabled: false },
+    legend: {
+      enabled: true,
+      itemStyle: {
+        color: "#000000",
+        fontWeight: "bold",
+        fontSize: "15px",
+      },
+    },
     credits: { enabled: false },
     exporting: { enabled: false },
-    xAxis: { type: 'datetime', title: { enabled: false }, },
-    yAxis: { title: { text: 'Person to text first (after 6am)' } },
-    plotOptions: {
-        scatter: {
-            marker: {
-                radius: 5,
-                states: {
-                    hover: {
-                        enabled: true,
-                        lineColor: 'rgb(100,100,100)'
-                    }
-                }
-            },
-            states: { hover: { marker: { enabled: false } } }
-        }
+    xAxis: {
+      type: "datetime",
+      title: { enabled: false },
+      labels: {
+        style: {
+          fontSize: "15px",
+        },
+      },
     },
-    series: seriesData
+    yAxis: {
+      title: { text: "Person to text first (after 6am)", style: {
+        fontSize: "15px",
+      }, },
+      labels: {
+        style: {
+          fontSize: "15px",
+        },
+      },
+    },
+    tooltip: {
+      style: {
+        fontSize: "15px",
+      },
+      formatter: function () {
+        return 'The first message for ' + moment(this.x).format("DD MMM YYYY");
+      }
+    },
+    plotOptions: {
+      scatter: {
+        marker: {
+          radius: 5,
+          states: {
+            hover: {
+              enabled: true,
+              lineColor: "rgb(100,100,100)",
+            },
+          },
+        },
+        states: { hover: { marker: { enabled: false } } },
+      },
+    },
+    series: seriesData,
   });
 }
 
@@ -154,12 +188,21 @@ function drawMessagesOverDays(seriesData) {
     chart: { type: 'area', zoomType: 'x' },
     title: { text: null },
     subtitle: { text: null },
-    legend: { enabled: false },
+    legend: {
+      enabled: true,
+      itemStyle: {
+        color: "#000000",
+        fontWeight: "bold",
+        fontSize: "15px",
+      },
+    },
     credits: { enabled: false },
     exporting: { enabled: false },
     xAxis: { type: 'datetime', title: { enabled: false }, },
     yAxis: { title: { text: 'Text count' } },
-    tooltip: { split: true },
+    tooltip: { split: true, style: {
+      fontSize: "15px",
+    }, },
     plotOptions: {
         area: {
             stacking: 'normal',
@@ -188,6 +231,9 @@ function drawPrimeHours(seriesData) {
     },
     colorAxis: { min: 0, minColor: '#FFFFFF', maxColor: '#673AB7' },
     tooltip: {
+      style: {
+        fontSize: "15px",
+      },
         formatter: function () {
             return '<b>' + this.series.xAxis.categories[this.point.x] + '</b><br><b>' +
                 this.point.value + '</b> texts exchanged <br><b>' + this.series.yAxis.categories[this.point.y] + '</b>';
